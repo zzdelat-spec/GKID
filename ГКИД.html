@@ -1,0 +1,4479 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ГКИД — Графическая карта исполнительной документации</title>
+
+  <style>
+    :root{
+      --bg:#f4f6f8;
+      --panel:#ffffff;
+      --line:#d7dde5;
+      --text:#1f2937;
+      --muted:#6b7280;
+      --blue:#2563eb;
+      --red:#dc2626;
+      --green:#16a34a;
+      --orange:#f59e0b;
+      --shadow:0 1px 6px rgba(15,23,42,.12);
+      --left-w:280px;
+      --timeline-h:54px;
+      --label-w:300px;
+      --track-h:86px;
+      --hex-h:42px;
+    }
+
+    *{box-sizing:border-box}
+
+    html,body{
+      height:100%;
+      margin:0;
+      font-family:Segoe UI, Arial, sans-serif;
+      color:var(--text);
+      background:var(--bg);
+      overflow:hidden;
+    }
+
+    button,input,select,textarea{font:inherit}
+
+    button,
+    .top-link-button{
+      border:1px solid #cbd5e1;
+      background:#fff;
+      border-radius:10px;
+      padding:8px 12px;
+      cursor:pointer;
+      color:#111827;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:4px;
+      font-size:14px;
+      white-space:nowrap;
+      text-decoration:none;
+    }
+
+    button:hover,
+    .top-link-button:hover{background:#f8fafc}
+    button.primary{background:var(--blue); color:#fff; border-color:var(--blue)}
+    button.primary:hover{background:#1d4ed8}
+    button.danger{background:#fff; color:var(--red); border-color:#fecaca}
+    button.active{background:#dbeafe; border-color:#60a5fa; color:#1e40af; font-weight:600}
+    button.small{padding:4px 7px; border-radius:7px; font-size:12px}
+
+    input,select,textarea{
+      border:1px solid #cbd5e1;
+      border-radius:8px;
+      padding:7px 9px;
+      background:#fff;
+      color:#111827;
+      width:100%;
+    }
+
+    textarea{resize:vertical; min-height:74px}
+
+    label{
+      display:block;
+      color:#374151;
+      font-size:12px;
+      margin:10px 0 4px;
+    }
+
+    .hidden{display:none!important}
+
+    .app{
+      height:100%;
+      display:flex;
+      flex-direction:column;
+    }
+
+    .topbar{
+      display:flex;
+      flex-direction:column;
+      align-items:stretch;
+      gap:6px;
+      padding:8px 10px 7px;
+      background:#fff;
+      border-bottom:1px solid var(--line);
+      box-shadow:var(--shadow);
+      z-index:5;
+      flex-shrink:0;
+    }
+
+    .topbar-header{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      min-height:32px;
+      width:100%;
+    }
+
+    .topbar-title{
+      flex:0 0 auto;
+      font-size:16px;
+      font-weight:700;
+      color:#111827;
+      line-height:1.25;
+      white-space:nowrap;
+    }
+
+    .topbar-row{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      flex-wrap:nowrap;
+      overflow-x:auto;
+      padding-bottom:2px;
+    }
+
+    .topbar .sep{
+      height:30px;
+      width:1px;
+      background:#e5e7eb;
+      margin:0 4px;
+      flex-shrink:0;
+    }
+
+    .mode-switch{
+      display:flex;
+      align-items:center;
+      gap:6px;
+      padding:4px;
+      border:1px solid #dbe3ee;
+      background:#f8fafc;
+      border-radius:12px;
+      white-space:nowrap;
+      flex:0 0 auto;
+    }
+
+    .mode-switch .mode-label{
+      font-size:12px;
+      font-weight:800;
+      color:#334155;
+      padding:0 4px 0 2px;
+    }
+
+    .mode-switch button{
+      padding:6px 10px;
+      border-radius:9px;
+      font-size:12px;
+    }
+
+    .mode-switch button.active{
+      background:#2563eb;
+      border-color:#2563eb;
+      color:#fff;
+      font-weight:800;
+    }
+
+    body.view-mode .edit-only,
+    body.view-mode .view-disabled{
+      opacity:.48;
+    }
+
+    body.view-mode .aosr polygon.hex,
+    body.view-mode .aosr polygon.hit,
+    body.view-mode .resize-handle{
+      cursor:default;
+    }
+
+    .view-note{
+      display:inline-flex;
+      align-items:center;
+      padding:4px 8px;
+      border:1px solid #dbe3ee;
+      border-radius:999px;
+      background:#f8fafc;
+      color:#475569;
+      font-size:12px;
+      font-weight:700;
+      white-space:nowrap;
+    }
+
+    .topbar .field{
+      width:160px;
+      flex:0 0 auto;
+    }
+
+    .topbar .scale-box{
+      min-width:95px;
+      color:#374151;
+      font-size:12px;
+      text-align:center;
+      flex:0 0 auto;
+    }
+
+    .origin-label{
+      margin:0;
+      width:88px;
+      font-size:12px;
+      color:#475569;
+      flex:0 0 auto;
+    }
+
+    .object-name-box{
+      flex:1 1 auto;
+      min-width:260px;
+      height:32px;
+      padding:7px 12px;
+      border:1px solid #dbe3ee;
+      border-radius:10px;
+      background:#f8fafc;
+      color:#0f172a;
+      font-size:14px;
+      font-weight:700;
+      line-height:16px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      cursor:pointer;
+    }
+
+    .object-name-box:hover{
+      background:#eff6ff;
+      border-color:#bfdbfe;
+    }
+
+    .object-name-box.empty{
+      color:#94a3b8;
+      font-weight:500;
+    }
+
+    .status-filter{
+      display:flex;
+      align-items:center;
+      gap:7px;
+      padding:5px 8px;
+      border:1px solid #dbe3ee;
+      background:#f8fafc;
+      border-radius:10px;
+      white-space:nowrap;
+      flex:0 0 auto;
+    }
+
+    .status-filter .filter-title{
+      font-size:12px;
+      font-weight:700;
+      color:#334155;
+    }
+
+    .status-filter .mini-label{
+      font-size:12px;
+      color:#64748b;
+      font-weight:600;
+      margin-left:2px;
+    }
+
+    .status-filter select{
+      width:142px;
+      padding:5px 7px;
+      border-radius:7px;
+      font-size:12px;
+    }
+
+    .status-filter #statusFilterTop{
+      width:138px;
+    }
+
+    .status-filter #smrFilterTop{
+      width:225px;
+    }
+
+    .status-filter .check{
+      display:flex;
+      align-items:center;
+      gap:4px;
+      margin:0;
+      font-size:12px;
+      color:#475569;
+    }
+
+    .status-filter input[type="checkbox"]{
+      width:auto;
+      margin:0;
+    }
+
+    @media (max-width:900px){
+      .topbar-header{
+        flex-wrap:wrap;
+      }
+
+      .object-name-box{
+        flex-basis:100%;
+      }
+    }
+
+    .main{
+      flex:1;
+      display:flex;
+      min-height:0;
+    }
+
+    .left{
+      width:var(--left-w);
+      background:var(--panel);
+      border-right:1px solid var(--line);
+      padding:12px;
+      overflow:auto;
+      z-index:3;
+      flex-shrink:0;
+    }
+
+    .left h3{
+      font-size:14px;
+      margin:14px 0 8px;
+      border-bottom:1px solid #f1f5f9;
+      padding-bottom:4px;
+    }
+
+    .hint{
+      font-size:12px;
+      color:var(--muted);
+      line-height:1.4;
+    }
+
+    .status{
+      padding:9px;
+      border-radius:8px;
+      background:#f1f5f9;
+      color:#334155;
+      font-size:12px;
+      line-height:1.35;
+      margin-top:10px;
+    }
+
+    .status.link{
+      background:#eff6ff;
+      color:#1e3a8a;
+      border:1px solid #bfdbfe;
+    }
+
+    .filter-panel{
+      margin-top:12px;
+      padding:10px;
+      border:1px solid #e2e8f0;
+      border-radius:10px;
+      background:#f8fafc;
+    }
+
+    .filter-panel .panel-title{
+      font-size:13px;
+      font-weight:700;
+      margin-bottom:7px;
+      color:#334155;
+    }
+
+    .filter-panel .filter-caption{
+      display:block;
+      font-size:11px;
+      color:#64748b;
+      font-weight:700;
+      margin:8px 0 4px;
+    }
+
+    .filter-panel .filter-note{
+      font-size:11px;
+      color:#64748b;
+      line-height:1.35;
+      margin-top:7px;
+    }
+
+    .filter-panel .check{
+      display:flex;
+      align-items:center;
+      gap:6px;
+      font-size:12px;
+      color:#475569;
+      margin:6px 0;
+    }
+
+    .filter-panel input[type="checkbox"]{width:auto; margin:0}
+
+    .search-box{
+      position:relative;
+      margin-bottom:8px;
+    }
+
+    .search-box input{
+      padding:5px 28px 5px 8px;
+      font-size:12px;
+    }
+
+    .search-box .clear-search{
+      position:absolute;
+      right:6px;
+      top:50%;
+      transform:translateY(-50%);
+      background:none;
+      border:none;
+      color:var(--muted);
+      cursor:pointer;
+      padding:0;
+      font-size:16px;
+      display:none;
+    }
+
+    .search-nav{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+      margin-top:10px;
+    }
+
+    .search-nav-btn{
+      min-height:48px;
+      border-radius:12px;
+      font-size:18px;
+      font-weight:700;
+      color:#111827;
+      gap:8px;
+    }
+
+    .search-nav-btn .search-arrow{
+      font-size:24px;
+      line-height:1;
+      font-weight:900;
+    }
+
+    .search-nav-btn:disabled{
+      opacity:.45;
+      cursor:not-allowed;
+      background:#f8fafc;
+    }
+
+    .search-nav-info{
+      margin-top:7px;
+      min-height:16px;
+      font-size:11px;
+      line-height:1.35;
+      color:#64748b;
+      text-align:center;
+    }
+
+    .chain-row{
+      display:flex;
+      align-items:center;
+      gap:6px;
+      padding:6px;
+      border:1px solid #e5e7eb;
+      border-radius:8px;
+      margin-bottom:6px;
+      background:#fff;
+    }
+
+    .chain-color{
+      width:14px;
+      height:14px;
+      border-radius:50%;
+      border:1px solid rgba(0,0,0,.15);
+      flex:0 0 auto;
+    }
+
+    .chain-name{
+      font-size:13px;
+      flex:1;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .chain-nav{
+      display:flex;
+      gap:2px;
+      flex-shrink:0;
+    }
+
+    .workspace{
+      flex:1;
+      display:flex;
+      flex-direction:column;
+      min-width:0;
+    }
+
+    .scroll-wrap{
+      flex:1;
+      overflow:auto;
+      position:relative;
+      background:#fff;
+      min-height:120px;
+    }
+
+    svg{
+      display:block;
+      background:#fff;
+    }
+
+    .track-bg:nth-child(odd){fill:#fbfdff}
+    .track-bg:nth-child(even){fill:#f7fafc}
+    .grid-line{stroke:#e5e7eb; stroke-width:1}
+    .tick-major{stroke:#94a3b8; stroke-width:1}
+    .tick-text{font-size:12px; fill:#475569; user-select:none}
+    .chain-label{font-size:13px; font-weight:600; fill:#334155; user-select:none}
+    .chain-sub{font-size:10.5px; fill:#64748b; user-select:none}
+
+    .sticky-chain-labels{pointer-events:none}
+    .sticky-chain-labels .sticky-bg{filter:drop-shadow(2px 0 3px rgba(15,23,42,.10))}
+
+    /* Легенда цепочек должна ловить наведение мышки, чтобы показывать полное название */
+    .chain-legend-hit{
+      pointer-events:all;
+      cursor:help;
+    }
+
+    .aosr polygon.hex{
+      stroke:#1f2937;
+      stroke-width:1.25;
+      cursor:pointer;
+      pointer-events:visiblePainted;
+    }
+
+    .aosr polygon.hit{
+      fill:transparent;
+      stroke:transparent;
+      stroke-width:18;
+      cursor:pointer;
+      pointer-events:stroke;
+    }
+
+    .aosr text{
+      pointer-events:none;
+      user-select:none;
+      font-size:12px;
+      fill:#111827;
+    }
+
+    .aosr.selected polygon.hex{
+      stroke:#dc2626;
+      stroke-width:3;
+    }
+
+    .aosr.source polygon.hex{
+      stroke:#2563eb;
+      stroke-width:4;
+    }
+
+    .aosr:hover polygon.hex{filter:brightness(.98)}
+
+    .aosr.dimmed{opacity:.16}
+    .aosr.partial-highlight{opacity:.78}
+
+    /* Совпадение по фильтру "СМР выполнен" / "СМР на этапе выполнения" — ярко */
+    .aosr.highlight,
+    .aosr.smr-filter-match,
+    .aosr.highlight.smr-filter-match{opacity:1!important}
+
+    /* Совпадение по фильтру "К выполнению СМР не приступали" — бледно, но читаемо */
+    .aosr.smr-not-started-match{opacity:.55!important}
+
+    .link-line.highlight{opacity:1!important}
+    .link-line.smr-not-started-link{opacity:.42!important; stroke:#94a3b8; stroke-width:2}
+
+    .aosr.highlight polygon.hex{
+      stroke:#0f172a;
+      stroke-width:2.5;
+      filter:drop-shadow(0 0 4px rgba(15,23,42,.25));
+    }
+
+    .aosr.id-filter-match polygon.hex{
+      stroke:#2563eb;
+      stroke-width:3;
+      filter:drop-shadow(0 0 4px rgba(37,99,235,.28));
+    }
+
+    .aosr.smr-filter-match polygon.hex{
+      stroke:#16a34a;
+      stroke-width:4;
+      filter:drop-shadow(0 0 5px rgba(22,163,74,.35));
+    }
+
+    .aosr.smr-not-started-match polygon.hex{
+      stroke:#94a3b8;
+      stroke-width:2;
+      filter:drop-shadow(0 0 3px rgba(100,116,139,.18));
+    }
+
+    .aosr.smr-not-started-match.selected polygon.hex{
+      stroke:#dc2626;
+      stroke-width:3;
+    }
+
+    .aosr.id-filter-match.smr-filter-match polygon.hex{
+      stroke:#15803d;
+      stroke-width:5;
+      filter:drop-shadow(0 0 6px rgba(22,163,74,.48));
+    }
+
+    .link-line{
+      stroke:#334155;
+      stroke-width:2;
+      fill:none;
+      pointer-events:none;
+    }
+
+    .link-line.selected{
+      stroke:#dc2626;
+      stroke-width:3;
+    }
+
+    .link-line.dimmed{opacity:.15}
+    .link-line.highlight{stroke:#ef4444; stroke-width:3}
+
+    .resize-handle{
+      fill:rgba(255,255,255,.65);
+      stroke:#475569;
+      stroke-width:1;
+      cursor:ew-resize;
+    }
+
+    .bottom-resizer{
+      height:9px;
+      flex:0 0 9px;
+      border-top:1px solid #cbd5e1;
+      border-bottom:1px solid #e2e8f0;
+      background:linear-gradient(#f8fafc,#e2e8f0);
+      cursor:ns-resize;
+      position:relative;
+      user-select:none;
+    }
+
+    .bottom-resizer::before{
+      content:"";
+      position:absolute;
+      left:50%;
+      top:3px;
+      transform:translateX(-50%);
+      width:86px;
+      height:3px;
+      border-radius:999px;
+      background:#94a3b8;
+    }
+
+    .bottom-resizer:hover{background:linear-gradient(#eef6ff,#dbeafe)}
+    .bottom-resizer:hover::before{background:#2563eb}
+
+    body.resizing-bottom{
+      cursor:ns-resize;
+      user-select:none;
+    }
+
+    body.resizing-bottom *{
+      cursor:ns-resize!important;
+      user-select:none!important;
+    }
+
+    .bottom-info{
+      height:330px;
+      min-height:92px;
+      max-height:72vh;
+      border-top:0;
+      background:#ffffff;
+      padding:10px 12px;
+      box-shadow:0 -1px 5px rgba(15,23,42,.08);
+      overflow-x:auto;
+      overflow-y:hidden;
+      flex:0 0 330px;
+    }
+
+
+
+    .bottom-info{
+      position:relative;
+    }
+
+    .bottom-minimap{
+      position:absolute;
+      right:14px;
+      top:48px;
+      width:270px;
+      height:154px;
+      border:1px solid #cbd5e1;
+      border-radius:12px;
+      background:rgba(255,255,255,.96);
+      box-shadow:0 8px 22px rgba(15,23,42,.16);
+      z-index:6;
+      overflow:hidden;
+      user-select:none;
+      backdrop-filter:blur(3px);
+      will-change:transform;
+    }
+
+    .bottom-minimap-head{
+      height:24px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:6px;
+      padding:0 8px;
+      border-bottom:1px solid #e2e8f0;
+      font-size:11px;
+      font-weight:800;
+      color:#334155;
+      background:#f8fafc;
+    }
+
+    .bottom-minimap-body{
+      width:100%;
+      height:130px;
+      cursor:crosshair;
+    }
+
+    .bottom-minimap svg{
+      display:block;
+      width:100%;
+      height:100%;
+      background:#fff;
+    }
+
+    .bottom-minimap .mini-chain{opacity:.10}
+    .bottom-minimap .mini-item{fill:#94a3b8; opacity:.75}
+    .bottom-minimap .mini-selected{fill:#dc2626; opacity:1}
+    .bottom-minimap .mini-viewport{fill:rgba(37,99,235,.08); stroke:#2563eb; stroke-width:1.5}
+
+    @media (max-width:1100px){
+      .bottom-minimap{display:none}
+    }
+
+    .bottom-title{
+      font-size:13px;
+      font-weight:700;
+      margin-bottom:7px;
+      color:#0f172a;
+    }
+
+    .info-empty{
+      font-size:13px;
+      color:#64748b;
+    }
+
+    .bottom-card{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      min-width:1180px;
+      min-height:100%;
+      height:100%;
+    }
+
+    .bottom-card-head{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding-bottom:6px;
+      border-bottom:1px solid #e5e7eb;
+      flex:0 0 auto;
+    }
+
+    .bottom-card-title{
+      font-size:14px;
+      font-weight:800;
+      color:#0f172a;
+      min-width:0;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+    }
+
+    .bottom-card-actions{
+      display:flex;
+      align-items:center;
+      gap:7px;
+      flex-wrap:wrap;
+      flex-shrink:0;
+    }
+
+    .bottom-card-body{
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+      flex:1 1 auto;
+      min-height:0;
+    }
+
+    .bottom-summary{
+      border:1px solid #e2e8f0;
+      border-radius:10px;
+      background:#fff;
+      padding:10px 12px;
+      flex:0 0 auto;
+    }
+
+    .bottom-summary-top{
+      display:flex;
+      align-items:center;
+      justify-content:flex-start;
+      gap:18px;
+      font-size:12px;
+      margin-bottom:10px;
+      flex-wrap:nowrap;
+      white-space:nowrap;
+    }
+
+    .bottom-summary-number{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      flex:0 0 auto;
+      min-width:380px;
+      width:max-content;
+      padding-right:10px;
+    }
+
+    .bottom-summary-number .info-value{
+      overflow:visible;
+      text-overflow:clip;
+      white-space:nowrap;
+    }
+
+    .bottom-summary-inline{
+      display:flex;
+      align-items:center;
+      gap:14px;
+      flex:0 0 auto;
+      flex-wrap:nowrap;
+      margin-left:8px;
+    }
+
+    .summary-inline-field{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      flex:0 0 auto;
+      white-space:nowrap;
+    }
+
+    .summary-inline-field .info-value{
+      overflow:visible;
+      text-overflow:clip;
+    }
+
+    .bottom-detail-grid{
+      display:grid;
+      grid-template-columns:90px 128px 92px 128px 78px 128px;
+      gap:8px 12px;
+      align-items:start;
+      justify-content:start;
+      font-size:12px;
+    }
+
+    .bottom-detail-grid .wide-value{
+      grid-column:2 / span 5;
+      max-width:760px;
+    }
+
+    .bottom-detail-grid .empty-cell{
+      min-width:0;
+    }
+
+    .info-label{color:#64748b}
+
+    .info-value{
+      color:#111827;
+      min-width:0;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+    }
+
+    .info-value.wrap{
+      white-space:normal;
+      overflow:visible;
+      text-overflow:clip;
+      line-height:1.35;
+    }
+
+    .info-status-select{
+      width:150px;
+      padding:5px 7px;
+      font-size:12px;
+    }
+
+    .info-smr-select{
+      width:235px;
+      max-width:100%;
+      padding:5px 7px;
+      font-size:12px;
+    }
+
+    .info-cost-inline{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      min-width:0;
+    }
+
+    .info-cost-input{
+      width:165px;
+      max-width:100%;
+      padding:5px 7px;
+      font-size:12px;
+      text-align:left;
+    }
+
+    .info-cost-unit{
+      font-size:12px;
+      color:#475569;
+      white-space:nowrap;
+    }
+
+    .bottom-docs{
+      border:1px solid #e2e8f0;
+      border-radius:10px;
+      background:#f8fafc;
+      padding:8px;
+      display:flex;
+      flex-direction:column;
+      flex:1 1 auto;
+      min-height:0;
+      overflow:hidden;
+    }
+
+    .bottom-docs-head{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:8px;
+      margin-bottom:6px;
+      flex:0 0 auto;
+    }
+
+    .bottom-docs-title{
+      font-size:13px;
+      font-weight:800;
+      color:#334155;
+      padding-top:6px;
+      white-space:nowrap;
+    }
+
+    .bottom-docs-tools{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+
+    .bottom-doc-add{
+      display:flex;
+      align-items:center;
+      gap:6px;
+      flex-wrap:wrap;
+    }
+
+    .bottom-doc-add select{
+      width:260px;
+      padding:5px 7px;
+      font-size:12px;
+    }
+
+    .bottom-doc-add input{
+      width:300px;
+      padding:5px 7px;
+      font-size:12px;
+    }
+
+    .bottom-doc-add button{
+      padding:5px 8px;
+      font-size:12px;
+    }
+
+    .bottom-doc-filter{
+      width:240px;
+      max-width:100%;
+      padding:5px 7px;
+      font-size:12px;
+    }
+
+    .bottom-docs-summary{
+      font-size:12px;
+      color:#475569;
+      white-space:nowrap;
+    }
+
+    .bottom-doc-list{
+      display:flex;
+      flex-direction:column;
+      gap:5px;
+      flex:1 1 auto;
+      min-height:0;
+      max-height:none;
+      overflow-x:hidden;
+      overflow-y:auto;
+      padding-right:3px;
+    }
+
+    .bottom-doc-row{
+      display:grid;
+      grid-template-columns:24px 250px minmax(260px,1fr) 48px 38px;
+      gap:8px;
+      align-items:center;
+      padding:5px 6px;
+      border:1px solid #e5e7eb;
+      border-radius:8px;
+      background:#fff;
+      font-size:12px;
+      flex:0 0 auto;
+    }
+
+    .bottom-doc-row input[type="checkbox"]{
+      width:auto;
+      margin:0;
+      justify-self:center;
+      transform:scale(1.1);
+    }
+
+    .bottom-doc-type{
+      color:#475569;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+    }
+
+    .bottom-doc-name-input{
+      width:100%;
+      padding:4px 7px;
+      font-size:12px;
+      border:1px solid transparent;
+      border-radius:6px;
+      background:transparent;
+      color:#111827;
+    }
+
+    .bottom-doc-name-input:hover{
+      border-color:#cbd5e1;
+      background:#fff;
+    }
+
+    .bottom-doc-name-input:focus{
+      border-color:#60a5fa;
+      background:#fff;
+      outline:none;
+    }
+
+    .bottom-doc-state{
+      font-size:11px;
+      font-weight:800;
+      text-align:center;
+      color:#991b1b;
+    }
+
+    .bottom-doc-state.ok{color:#166534}
+
+    .bottom-doc-del{
+      width:30px;
+      height:30px;
+      padding:0;
+      border:1px solid #fecaca;
+      border-radius:8px;
+      background:#fff;
+      color:#dc2626;
+      font-size:18px;
+      line-height:1;
+      font-weight:400;
+    }
+
+    .bottom-doc-del:hover{
+      background:#fff1f2;
+      border-color:#fca5a5;
+      color:#b91c1c;
+    }
+
+    .bottom-doc-empty{
+      font-size:12px;
+      color:#64748b;
+      padding:10px;
+      border:1px dashed #cbd5e1;
+      border-radius:8px;
+      background:#fff;
+      flex:1 1 auto;
+    }
+
+    .docs-block{
+      margin-top:12px;
+      padding:10px;
+      border:1px solid #e2e8f0;
+      border-radius:10px;
+      background:#f8fafc;
+    }
+
+    .docs-head{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:8px;
+      margin-bottom:8px;
+    }
+
+    .docs-title{
+      font-size:13px;
+      font-weight:700;
+      color:#334155;
+    }
+
+    .docs-help{
+      font-size:11px;
+      color:#64748b;
+      margin:3px 0 8px;
+      line-height:1.35;
+    }
+
+    .doc-add{
+      display:grid;
+      grid-template-columns:135px 1fr auto;
+      gap:7px;
+      align-items:center;
+      margin-bottom:9px;
+    }
+
+    .doc-add input,.doc-add select{
+      padding:6px 8px;
+      font-size:12px;
+      border-radius:7px;
+    }
+
+    .docs-list{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      max-height:230px;
+      overflow:auto;
+      padding-right:3px;
+    }
+
+    .doc-row{
+      display:grid;
+      grid-template-columns:28px 112px minmax(170px,1fr) 48px 28px;
+      gap:6px;
+      align-items:center;
+      padding:6px;
+      border:1px solid #e5e7eb;
+      border-radius:8px;
+      background:#fff;
+    }
+
+    .doc-row input[type="checkbox"]{
+      width:auto;
+      margin:0;
+      justify-self:center;
+      transform:scale(1.12);
+    }
+
+    .doc-row input,.doc-row select{
+      padding:5px 7px;
+      font-size:12px;
+      border-radius:7px;
+    }
+
+    .doc-present{
+      font-size:11px;
+      font-weight:700;
+      text-align:center;
+      color:#991b1b;
+    }
+
+    .doc-present.ok{color:#166534}
+
+    .doc-del{
+      padding:4px 6px;
+      color:#dc2626;
+      border-color:#fecaca;
+    }
+
+    .doc-progress{
+      font-size:12px;
+      color:#475569;
+      margin-top:7px;
+    }
+
+    .modal-backdrop{
+      position:fixed;
+      inset:0;
+      background:rgba(15,23,42,.35);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      z-index:20;
+    }
+
+    .modal{
+      width:min(620px,calc(100vw - 24px));
+      max-height:calc(100vh - 24px);
+      overflow:auto;
+      background:#fff;
+      border-radius:14px;
+      box-shadow:0 20px 50px rgba(0,0,0,.25);
+      padding:16px;
+    }
+
+    .modal h2{
+      font-size:18px;
+      margin:0 0 8px;
+    }
+
+    .row{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+    }
+
+    .actions{
+      display:flex;
+      gap:8px;
+      justify-content:flex-end;
+      margin-top:14px;
+      flex-wrap:wrap;
+    }
+
+    .toast{
+      position:fixed;
+      right:14px;
+      bottom:14px;
+      background:#111827;
+      color:white;
+      padding:10px 12px;
+      border-radius:9px;
+      box-shadow:var(--shadow);
+      font-size:13px;
+      opacity:0;
+      transform:translateY(8px);
+      transition:.2s;
+      z-index:50;
+      max-width:420px;
+    }
+
+    .toast.show{
+      opacity:1;
+      transform:translateY(0);
+    }
+
+    .kbd{
+      font-family:Consolas, monospace;
+      background:#e5e7eb;
+      padding:1px 4px;
+      border-radius:4px;
+      color:#111827;
+    }
+  </style>
+</head>
+
+<body>
+<div class="app">
+  <div class="topbar">
+    <div class="topbar-header">
+      <div class="topbar-title">ГКИД — графическая карта исполнительной документации</div>
+      <div id="objectNameBox" class="object-name-box empty" title="Двойной клик — изменить название объекта">Объект не задан</div>
+    </div>
+
+    <div class="topbar-row">
+      <button id="btnNew" title="Создать новый проект ГКИД">Новый ГКИД</button>
+      <button id="btnSave">Сохранить ГКИД</button>
+      <button id="btnLoad">Загрузить ГКИД</button>
+      <button id="btnCsv">Экспорт CSV</button>
+      <input id="fileInput" type="file" accept=".json,.gkid,application/json" class="hidden" />
+
+      <div class="sep"></div>
+
+      <div class="mode-switch" title="Просмотр — без изменения данных. Редактирование — после ввода пароля проекта.">
+        <span class="mode-label">Режим</span>
+        <button id="btnViewMode" type="button" class="active">Просмотр</button>
+        <button id="btnEditMode" type="button">Редактирование</button>
+      </div>
+
+      <div class="sep"></div>
+
+      <button id="btnAddChain" class="edit-only">+ Цепочка</button>
+      <button id="btnAddAosr" class="primary edit-only">+ АОСР</button>
+      <button id="btnLinkMode" class="edit-only">Связать АОСР</button>
+
+      <div class="sep"></div>
+
+      <div class="status-filter" title="Совместная подсветка АОСР по статусу ИД и статусу СМР">
+        <span class="filter-title">Фильтры</span>
+
+        <span class="mini-label">ИД</span>
+        <select id="statusFilterTop">
+          <option value="">Все статусы ИД</option>
+          <option>Не начато</option>
+          <option>В работе</option>
+          <option>На проверке</option>
+          <option>Подписано</option>
+          <option>Замечание</option>
+          <option>Исправить</option>
+          <option>Архив</option>
+        </select>
+
+        <span class="mini-label">СМР</span>
+        <select id="smrFilterTop">
+          <option value="">Все статусы СМР</option>
+          <option>К выполнению СМР не приступали</option>
+          <option>СМР на этапе выполнения</option>
+          <option>СМР выполнен</option>
+        </select>
+
+        <label class="check"><input id="statusOnlyTop" type="checkbox" /> Только</label>
+        <button id="btnStatusResetTop" class="small">Сброс</button>
+      </div>
+
+      <div class="sep"></div>
+
+      <button id="btnZoomOut">−</button>
+      <div id="scaleLabel" class="scale-box" title="Ctrl + колесико мыши над картой — плавный зум"></div>
+      <button id="btnZoomIn">+</button>
+      <button id="btnFit">Вся карта</button>
+
+      <div class="sep"></div>
+
+      <label class="origin-label">Начало шкалы</label>
+      <input id="originDate" class="field" type="date" />
+
+      <a id="btnDeveloper"
+         class="top-link-button"
+         href="https://tsk-yamal.ru/"
+         target="_blank"
+         rel="noopener noreferrer"
+         title="Открыть сайт разработчика">
+        О разработчике
+      </a>
+    </div>
+  </div>
+
+  <div class="main">
+    <aside class="left">
+      <div class="filter-panel" style="margin-top:0; margin-bottom:12px;">
+        <div class="panel-title">Поиск по тексту</div>
+        <div class="search-box">
+          <input id="textSearchInput" type="text" placeholder="Номер, название, раздел..." />
+          <button id="clearSearchBtn" class="clear-search" type="button">×</button>
+        </div>
+        <div class="search-nav" aria-label="Навигация по результатам поиска">
+          <button id="btnSearchPrev" class="search-nav-btn" type="button" title="Перейти к предыдущему найденному АОСР" disabled>
+            <span class="search-arrow">←</span><span>пред.</span>
+          </button>
+          <button id="btnSearchNext" class="search-nav-btn" type="button" title="Перейти к следующему найденному АОСР" disabled>
+            <span>след.</span><span class="search-arrow">→</span>
+          </button>
+        </div>
+        <div id="searchNavInfo" class="search-nav-info">Введите текст для поиска</div>
+      </div>
+
+      <h3>Цепочки</h3>
+      <div id="chainsList"></div>
+
+      <div class="hint">
+        Связь создаётся так: нажать <b>Связать АОСР</b>, кликнуть первый шестиугольник, затем второй.
+      </div>
+
+      <div class="filter-panel">
+        <div class="panel-title">Фильтр / подсветка статусов</div>
+
+        <span class="filter-caption">Статус ИД</span>
+        <select id="statusFilterLeft">
+          <option value="">Все статусы ИД</option>
+          <option>Не начато</option>
+          <option>В работе</option>
+          <option>На проверке</option>
+          <option>Подписано</option>
+          <option>Замечание</option>
+          <option>Исправить</option>
+          <option>Архив</option>
+        </select>
+
+        <span class="filter-caption">Статус СМР</span>
+        <select id="smrFilterLeft">
+          <option value="">Все статусы СМР</option>
+          <option>К выполнению СМР не приступали</option>
+          <option>СМР на этапе выполнения</option>
+          <option>СМР выполнен</option>
+        </select>
+
+        <label class="check"><input id="statusOnlyLeft" type="checkbox" /> Показать только совпадение выбранных условий</label>
+        <button id="btnStatusResetLeft" class="small">Сбросить фильтры</button>
+
+        <div class="filter-note">
+          СМР-фильтр: «СМР выполнен» подсвечивается зелёной обводкой, «К выполнению СМР не приступали» показывается бледно. Фильтр ИД закрашивает АОСР цветом статуса. При включении «Только» остаются только АОСР, где выполняются оба условия.
+        </div>
+      </div>
+
+      <div id="statusBox" class="status">Обычный режим.</div>
+
+      <h3>Управление мышью</h3>
+      <div class="hint">
+        • Перетащи АОСР за середину — сдвиг по времени или перенос на другую цепочку.<br>
+        • Потяни за края — изменение дат.<br>
+        • <b>Двойной клик — полная карточка АОСР.</b><br>
+        • <span class="kbd">Ctrl + Колесо</span> — масштаб карты.<br>
+        • <span class="kbd">Delete</span> — удалить выбранный АОСР/связь.<br>
+        • Двойной клик по названию объекта сверху — переименовать объект.
+      </div>
+    </aside>
+
+    <section class="workspace">
+      <div id="scrollWrap" class="scroll-wrap">
+        <svg id="svg" width="1600" height="900" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+              <path d="M0,0 L0,6 L9,3 z" fill="#334155"></path>
+            </marker>
+
+            <clipPath id="chainLegendTextClip">
+              <rect x="0" y="0" width="250" height="38"></rect>
+            </clipPath>
+          </defs>
+          <g id="root"></g>
+        </svg>
+      </div>
+
+      <div id="bottomResizer" class="bottom-resizer" title="Потяни вверх или вниз, чтобы изменить высоту нижней карточки"></div>
+
+      <div id="bottomInfo" class="bottom-info">
+        <div class="bottom-title">Карточка АОСР</div>
+        <div class="info-empty">
+          Кликни по шестиугольнику АОСР — здесь появится нижняя карточка с номером, статусом ИД, статусом СМР, суммой СМР и комплектом документов.
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<div id="modalBackdrop" class="modal-backdrop">
+  <div class="modal">
+    <h2 id="modalTitle">АОСР</h2>
+    <input id="editId" type="hidden" />
+
+    <div class="row">
+      <div>
+        <label>Номер АОСР</label>
+        <input id="aNumber" placeholder="АОСР №1" />
+      </div>
+      <div>
+        <label>Цепочка</label>
+        <select id="aChain"></select>
+      </div>
+    </div>
+
+    <label>Наименование работ</label>
+    <textarea id="aTitle" placeholder="Например: Устройство песчаного основания под трубопровод"></textarea>
+
+    <div class="row">
+      <div>
+        <label>Дата начала</label>
+        <input id="aStart" type="date" />
+      </div>
+      <div>
+        <label>Дата окончания</label>
+        <input id="aFinish" type="date" />
+      </div>
+    </div>
+
+    <div class="row">
+      <div>
+        <label>Раздел проекта</label>
+        <input id="aSection" placeholder="НВК, ОВ, ЭОМ..." />
+      </div>
+      <div>
+        <label>Участок / система / линия</label>
+        <input id="aSystem" placeholder="К31Н, П1, В1..." />
+      </div>
+    </div>
+
+    <label>Основной статус ИД</label>
+    <select id="aStatus"></select>
+
+    <label>Статус выполнения СМР</label>
+    <select id="aSmrStatus"></select>
+
+    <label>Сумма СМР, руб.</label>
+    <input id="aSmrCost" type="text" inputmode="decimal" placeholder="Например: 1250000" />
+
+    <label>Примечание</label>
+    <textarea id="aNote" placeholder="Дополнительные сведения"></textarea>
+
+    <div class="docs-block">
+      <div class="docs-head">
+        <div class="docs-title">Комплект документов / вложений для АОСР</div>
+        <button id="btnAddTypicalDocs" type="button" class="small">Добавить типовые</button>
+      </div>
+
+      <div class="docs-help">
+        Если галочка снята — документа пока нет в наличии. Если галочка стоит — документ есть.
+      </div>
+
+      <div class="doc-add">
+        <select id="newDocType"></select>
+        <input id="newDocName" placeholder="Название документа / вложения" />
+        <button id="btnAddDocRow" type="button" class="small">+ Добавить</button>
+      </div>
+
+      <div id="docsList" class="docs-list"></div>
+      <div id="docsProgress" class="doc-progress"></div>
+    </div>
+
+    <div class="actions">
+      <button id="btnDeleteAosr" class="danger">Удалить</button>
+      <button id="btnCancelModal">Отмена</button>
+      <button id="btnSaveAosr" class="primary">Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<div id="chainModalBackdrop" class="modal-backdrop">
+  <div class="modal" style="width:min(430px,calc(100vw - 24px))">
+    <h2>Цепочка АОСР</h2>
+    <input id="chainEditId" type="hidden" />
+
+    <label>Название цепочки</label>
+    <input id="chainName" placeholder="Например: Земляные работы" />
+
+    <label>Цвет</label>
+    <input id="chainColor" type="color" value="#bfdbfe" />
+
+    <div class="actions">
+      <button id="btnDeleteChain" class="danger">Удалить</button>
+      <button id="btnCancelChain">Отмена</button>
+      <button id="btnSaveChain" class="primary">Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+'use strict';
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+const TIMELINE_H = 54;
+const LABEL_W = 300;
+const TRACK_H = 86;
+const ROW_TOP_PAD = 16;
+const ROW_GAP = 8;
+const TRACK_BOTTOM_PAD = 16;
+const HEX_H = 42;
+const MIN_HEX_W = 26;
+const HANDLE_W = 7;
+
+const DEFAULT_COLORS = ['#bfdbfe','#bbf7d0','#fde68a','#fecaca','#ddd6fe','#bae6fd','#fed7aa','#e2e8f0'];
+
+const ID_STATUSES = ['Не начато','В работе','На проверке','Подписано','Замечание','Исправить','Архив'];
+
+const SMR_STATUS_OPTIONS = [
+  'К выполнению СМР не приступали',
+  'СМР на этапе выполнения',
+  'СМР выполнен'
+];
+
+const SMR_STATUS_NOT_STARTED = SMR_STATUS_OPTIONS[0];
+const SMR_STATUS_IN_PROGRESS = SMR_STATUS_OPTIONS[1];
+const SMR_STATUS_DONE = SMR_STATUS_OPTIONS[2];
+
+const DEFAULT_SMR_STATUS = SMR_STATUS_NOT_STARTED;
+
+const DOC_TYPES = [
+  'Акты входного контроля на материалы',
+  'Паспорта/Сертификаты на материалы',
+  'Лабораторные заключения',
+  'Геодезическая схема',
+  'Монтажная схема',
+  'Запись в ОЖР',
+  'Запись в журнале спец работ',
+  'Другое'
+];
+
+const DEFAULT_DOC_TEMPLATES = [
+  {type:'Акты входного контроля на материалы', name:'Акты входного контроля на материалы'},
+  {type:'Паспорта/Сертификаты на материалы', name:'Паспорта/Сертификаты на материалы'},
+  {type:'Лабораторные заключения', name:'Лабораторные заключения'},
+  {type:'Геодезическая схема', name:'Геодезическая схема'},
+  {type:'Монтажная схема', name:'Монтажная схема'},
+  {type:'Запись в ОЖР', name:'Запись в ОЖР'},
+  {type:'Запись в журнале спец работ', name:'Запись в журнале спец работ'},
+  {type:'Другое', name:'Другое'}
+];
+
+const state = {
+  objectName:'Демонстрационный объект ГКИД',
+  origin:isoDate(new Date(new Date().getFullYear(), 4, 1)),
+  scale:28,
+  chains:[],
+  items:[],
+  links:[],
+  mode:'view',
+  projectPassword:'admin',
+  linkMode:false,
+  linkSourceId:null,
+  selectedItemId:null,
+  selectedLinkId:null,
+  drag:null,
+  dirty:false,
+  filterStatus:'',
+  filterSmr:'',
+  filterOnly:false,
+  filterText:'',
+  searchCursor:-1,
+  bottomDocFilter:'__all__'
+};
+
+let layoutCache = {
+  chainY:{},
+  chainH:{},
+  itemLane:{},
+  totalHeight:TIMELINE_H + 200
+};
+
+const svg = document.getElementById('svg');
+const root = document.getElementById('root');
+const scrollWrap = document.getElementById('scrollWrap');
+const statusBox = document.getElementById('statusBox');
+const scaleLabel = document.getElementById('scaleLabel');
+const originDate = document.getElementById('originDate');
+const bottomInfo = document.getElementById('bottomInfo');
+const bottomResizer = document.getElementById('bottomResizer');
+const objectNameBox = document.getElementById('objectNameBox');
+
+const statusFilterTop = document.getElementById('statusFilterTop');
+const smrFilterTop = document.getElementById('smrFilterTop');
+const statusOnlyTop = document.getElementById('statusOnlyTop');
+const btnStatusResetTop = document.getElementById('btnStatusResetTop');
+const statusFilterLeft = document.getElementById('statusFilterLeft');
+const smrFilterLeft = document.getElementById('smrFilterLeft');
+const statusOnlyLeft = document.getElementById('statusOnlyLeft');
+const btnStatusResetLeft = document.getElementById('btnStatusResetLeft');
+const textSearchInput = document.getElementById('textSearchInput');
+const clearSearchBtn = document.getElementById('clearSearchBtn');
+const btnSearchPrev = document.getElementById('btnSearchPrev');
+const btnSearchNext = document.getElementById('btnSearchNext');
+const searchNavInfo = document.getElementById('searchNavInfo');
+
+function isoDate(d){
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2,'0');
+  const day = String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${day}`;
+}
+
+function parseDate(s){
+  if(!s) return null;
+  const [y,m,d] = String(s).split('-').map(Number);
+  return new Date(y,m-1,d);
+}
+
+function addDays(iso,days){
+  const d = parseDate(iso);
+  d.setDate(d.getDate() + days);
+  return isoDate(d);
+}
+
+function diffDays(a,b){
+  return Math.round((parseDate(a) - parseDate(b)) / DAY_MS);
+}
+
+function clamp(n,min,max){
+  return Math.max(min,Math.min(max,n));
+}
+
+function escapeXml(s){
+  return String(s ?? '').replace(/[&<>"]/g, c => ({
+    '&':'&amp;',
+    '<':'&lt;',
+    '>':'&gt;',
+    '"':'&quot;'
+  }[c]));
+}
+
+function uid(prefix){
+  return `${prefix}_${Math.random().toString(36).slice(2,10)}_${Date.now().toString(36)}`;
+}
+
+function normalizeObjectName(value){
+  return String(value || '').trim();
+}
+
+function canonicalSmrStatus(value){
+  const raw = String(value || '').trim().toLowerCase();
+
+  if(!raw) return DEFAULT_SMR_STATUS;
+
+  // Сначала проверяем точные значения из списка.
+  // Важно: "СМР на этапе выполнения" содержит внутри слово "выполнен",
+  // поэтому нельзя искать "выполнен" раньше, чем проверен статус "на этапе выполнения".
+  if(raw === SMR_STATUS_NOT_STARTED.toLowerCase()) return SMR_STATUS_NOT_STARTED;
+  if(raw === SMR_STATUS_IN_PROGRESS.toLowerCase()) return SMR_STATUS_IN_PROGRESS;
+  if(raw === SMR_STATUS_DONE.toLowerCase()) return SMR_STATUS_DONE;
+
+  // Затем — запасные варианты на случай старых/ручных записей.
+  if(raw.includes('не приступ')) return SMR_STATUS_NOT_STARTED;
+  if(raw.includes('на этапе') || raw.includes('этап') || raw.includes('в работе') || raw.includes('процессе')) return SMR_STATUS_IN_PROGRESS;
+  if(raw.includes('смр выполнен') || raw === 'выполнен' || raw === 'выполнено' || raw.includes('работы выполнены')) return SMR_STATUS_DONE;
+
+  return DEFAULT_SMR_STATUS;
+}
+
+function normalizeSmrStatus(value){
+  return canonicalSmrStatus(value);
+}
+
+function normalizeSmrCost(value){
+  return value == null ? '' : String(value).trim();
+}
+
+function idStatusColor(status){
+  const colors = {
+    'Не начато':'#e5e7eb',
+    'В работе':'#bfdbfe',
+    'На проверке':'#fde68a',
+    'Подписано':'#bbf7d0',
+    'Замечание':'#fecaca',
+    'Исправить':'#fed7aa',
+    'Архив':'#ddd6fe'
+  };
+
+  return colors[status || ''] || '#e2e8f0';
+}
+
+function itemMatchesIdFilter(item){
+  return !state.filterStatus || (item.status || 'Не начато') === state.filterStatus;
+}
+
+function itemMatchesSmrFilter(item){
+  return !state.filterSmr || canonicalSmrStatus(item.smrStatus) === canonicalSmrStatus(state.filterSmr);
+}
+
+function hasActiveVisualFilter(){
+  return !!(state.filterStatus || state.filterSmr || state.filterText);
+}
+
+function makeDoc(type,name,present=false){
+  return {
+    id:uid('doc'),
+    type:type || 'Другое',
+    name:name || '',
+    present:!!present,
+    note:''
+  };
+}
+
+function defaultDocs(){
+  return DEFAULT_DOC_TEMPLATES.map(d => makeDoc(d.type,d.name,false));
+}
+
+function normalizeDoc(d){
+  return {
+    id:d?.id || uid('doc'),
+    type:d?.type || d?.doc_type || 'Другое',
+    name:d?.name || d?.doc_name || '',
+    present:!!(d?.present || d?.available || d?.exists),
+    note:d?.note || ''
+  };
+}
+
+function ensureItemDocs(item,fillDefault=false){
+  if(!Array.isArray(item.docs)){
+    item.docs = fillDefault ? defaultDocs() : [];
+  }
+  item.docs = item.docs.map(normalizeDoc).filter(d => d.name || d.type);
+  return item.docs;
+}
+
+function normalizeProjectData(){
+  state.objectName = normalizeObjectName(state.objectName);
+  state.items.forEach(it => {
+    ensureItemDocs(it,false);
+    it.smrStatus = normalizeSmrStatus(it.smrStatus);
+    it.smrCost = normalizeSmrCost(it.smrCost);
+  });
+}
+
+function docsSummary(item){
+  const docs = ensureItemDocs(item,false);
+  const total = docs.length;
+  const ready = docs.filter(d => d.present).length;
+  const missing = Math.max(0,total - ready);
+  return {
+    total,
+    ready,
+    missing,
+    text:total ? `${ready}/${total} есть · нет: ${missing}` : 'не задано'
+  };
+}
+
+function missingDocsText(item){
+  return ensureItemDocs(item,false)
+    .filter(d => !d.present)
+    .map(d => `${d.type}: ${d.name}`)
+    .join('; ');
+}
+
+function normalizeDocTypeName(type){
+  return String(type || 'Другое').trim() || 'Другое';
+}
+
+function csvDocTypeColumns(){
+  const result = [];
+  const seen = new Set();
+
+  DOC_TYPES.forEach(type => {
+    const clean = normalizeDocTypeName(type);
+    const key = clean.toLowerCase();
+
+    if(!seen.has(key)){
+      seen.add(key);
+      result.push(clean);
+    }
+  });
+
+  state.items.forEach(item => {
+    ensureItemDocs(item,false).forEach(doc => {
+      const clean = normalizeDocTypeName(doc.type);
+      const key = clean.toLowerCase();
+
+      if(!seen.has(key)){
+        seen.add(key);
+        result.push(clean);
+      }
+    });
+  });
+
+  return result;
+}
+
+function missingDocsGroupedByType(item,types){
+  const map = new Map(types.map(type => [type,[]]));
+  const typeLookup = new Map(types.map(type => [type.toLowerCase(),type]));
+
+  ensureItemDocs(item,false)
+    .filter(doc => !doc.present)
+    .forEach(doc => {
+      const rawType = normalizeDocTypeName(doc.type);
+      const key = rawType.toLowerCase();
+      const type = typeLookup.get(key) || rawType;
+      const name = String(doc.name || '').trim() || rawType;
+
+      if(!map.has(type)){
+        map.set(type,[]);
+      }
+
+      map.get(type).push(name);
+    });
+
+  return map;
+}
+
+function csvMultilineNumberedList(values){
+  return values
+    .filter(v => String(v || '').trim())
+    .map((v,idx) => `${idx + 1}) ${String(v).trim()}`)
+    .join('\n');
+}
+
+function uniqueDocs(existing,templates){
+  const keys = new Set(existing.map(d => `${(d.type||'').toLowerCase()}|${(d.name||'').toLowerCase()}`));
+  const added = [];
+
+  for(const t of templates){
+    const key = `${(t.type||'').toLowerCase()}|${(t.name||'').toLowerCase()}`;
+    if(!keys.has(key)){
+      const d = makeDoc(t.type,t.name,false);
+      existing.push(d);
+      added.push(d);
+      keys.add(key);
+    }
+  }
+
+  return added;
+}
+
+function smrStatusOptionsHtml(selected){
+  const current = normalizeSmrStatus(selected);
+  return SMR_STATUS_OPTIONS.map(v => `<option ${v === current ? 'selected' : ''}>${escapeXml(v)}</option>`).join('');
+}
+
+function currentDocTypesForItem(item){
+  const docs = ensureItemDocs(item,false);
+  const seen = new Set();
+  const values = [];
+
+  docs.forEach(d => {
+    const type = String(d.type || 'Другое').trim() || 'Другое';
+    const key = type.toLowerCase();
+
+    if(!seen.has(key)){
+      seen.add(key);
+      values.push(type);
+    }
+  });
+
+  const knownOrder = new Map(DOC_TYPES.map((v,idx) => [v.toLowerCase(),idx]));
+
+  values.sort((a,b) => {
+    const ak = a.toLowerCase();
+    const bk = b.toLowerCase();
+    const ai = knownOrder.has(ak) ? knownOrder.get(ak) : 9999;
+    const bi = knownOrder.has(bk) ? knownOrder.get(bk) : 9999;
+
+    if(ai !== bi) return ai - bi;
+
+    return a.localeCompare(b,'ru');
+  });
+
+  return values;
+}
+
+function normalizeBottomDocFilterForItem(item){
+  const selected = state.bottomDocFilter || '__all__';
+
+  if(selected === '__all__') return '__all__';
+
+  const values = currentDocTypesForItem(item);
+  return values.includes(selected) ? selected : '__all__';
+}
+
+function bottomDocFilterOptionsHtml(selected,item){
+  const values = ['__all__', ...currentDocTypesForItem(item)];
+
+  return values.map(v => {
+    const label = v === '__all__' ? 'Все категории' : v;
+    return `<option value="${escapeXml(v)}" ${v === selected ? 'selected' : ''}>${escapeXml(label)}</option>`;
+  }).join('');
+}
+
+function renderObjectName(){
+  const name = normalizeObjectName(state.objectName);
+
+  objectNameBox.textContent = name || 'Объект не задан';
+  objectNameBox.title = name
+    ? `Объект: ${name}\nДвойной клик — изменить название объекта`
+    : 'Название объекта не задано. Двойной клик — задать название объекта';
+
+  objectNameBox.classList.toggle('empty', !name);
+}
+
+function initDemo(){
+  state.objectName = 'Демонстрационный объект ГКИД';
+  state.projectPassword = 'admin';
+  state.mode = 'view';
+  state.origin = isoDate(new Date(new Date().getFullYear(),4,1));
+  state.scale = 28;
+
+  state.chains = [
+    {id:uid('chain'), name:'Земляные работы', color:'#bfdbfe', order:0, visible:true},
+    {id:uid('chain'), name:'Трубопроводы', color:'#bbf7d0', order:1, visible:true},
+    {id:uid('chain'), name:'Вентиляция', color:'#fde68a', order:2, visible:true}
+  ];
+
+  const c1 = state.chains[0].id;
+  const c2 = state.chains[1].id;
+  const c3 = state.chains[2].id;
+
+  state.items = [
+    {
+      id:uid('aosr'),
+      chainId:c1,
+      number:'АОСР №1',
+      title:'Разработка грунта в траншее',
+      start:addDays(state.origin,0),
+      finish:addDays(state.origin,4),
+      section:'НВК',
+      system:'К31Н',
+      status:'В работе',
+      smrStatus:'СМР на этапе выполнения',
+      smrCost:'',
+      note:'',
+      docs:defaultDocs()
+    },
+    {
+      id:uid('aosr'),
+      chainId:c1,
+      number:'АОСР №2',
+      title:'Устройство песчаного основания под трубопровод К31Н',
+      start:addDays(state.origin,5),
+      finish:addDays(state.origin,8),
+      section:'НВК',
+      system:'К31Н',
+      status:'Не начато',
+      smrStatus:'К выполнению СМР не приступали',
+      smrCost:'',
+      note:'',
+      docs:defaultDocs()
+    },
+    {
+      id:uid('aosr'),
+      chainId:c2,
+      number:'АОСР №3',
+      title:'Монтаж трубопровода линии К31Н',
+      start:addDays(state.origin,9),
+      finish:addDays(state.origin,15),
+      section:'НВК',
+      system:'К31Н',
+      status:'Не начато',
+      smrStatus:'К выполнению СМР не приступали',
+      smrCost:'',
+      note:'',
+      docs:defaultDocs()
+    },
+    {
+      id:uid('aosr'),
+      chainId:c3,
+      number:'АОСР №4',
+      title:'Заделка мест прохода системы приточной вентиляции П1',
+      start:addDays(state.origin,12),
+      finish:addDays(state.origin,14),
+      section:'ОВ',
+      system:'П1',
+      status:'Не начато',
+      smrStatus:'К выполнению СМР не приступали',
+      smrCost:'',
+      note:'',
+      docs:defaultDocs()
+    }
+  ];
+
+  state.links = [
+    {id:uid('link'), sourceId:state.items[0].id, targetId:state.items[1].id},
+    {id:uid('link'), sourceId:state.items[1].id, targetId:state.items[2].id}
+  ];
+
+  state.linkMode = false;
+  state.linkSourceId = null;
+  state.selectedItemId = null;
+  state.selectedLinkId = null;
+  state.bottomDocFilter = '__all__';
+
+  normalizeProjectData();
+}
+
+function createEmptyProject(objectName,password='admin'){
+  state.objectName = normalizeObjectName(objectName);
+  state.projectPassword = normalizeProjectPassword(password) || 'admin';
+  state.mode = 'edit';
+  state.origin = isoDate(new Date(new Date().getFullYear(),4,1));
+  state.scale = 28;
+
+  state.chains = [
+    {id:uid('chain'), name:'Основная цепочка', color:'#bfdbfe', order:0, visible:true}
+  ];
+
+  state.items = [];
+  state.links = [];
+  state.linkMode = false;
+  state.linkSourceId = null;
+  state.selectedItemId = null;
+  state.selectedLinkId = null;
+  state.drag = null;
+  state.bottomDocFilter = '__all__';
+  state.filterStatus = '';
+  state.filterSmr = '';
+  state.filterOnly = false;
+  state.filterText = '';
+  state.dirty = true;
+
+  document.getElementById('btnLinkMode').classList.remove('active');
+  applyAppMode();
+}
+
+function createNewProject(){
+  if(state.dirty && !confirm('Текущий проект не сохранён. Создать новый ГКИД?')){
+    return;
+  }
+
+  const objectName = prompt('Введите название объекта для нового ГКИД:', '');
+
+  if(objectName === null) return;
+
+  const cleanName = normalizeObjectName(objectName);
+
+  if(!cleanName){
+    toast('Новый ГКИД не создан: нужно указать название объекта.');
+    return;
+  }
+
+  const password = prompt('Задайте пароль для режима редактирования нового проекта:', 'admin');
+
+  if(password === null) return;
+
+  const cleanPassword = normalizeProjectPassword(password);
+
+  if(!cleanPassword){
+    toast('Новый ГКИД не создан: пароль не может быть пустым.');
+    return;
+  }
+
+  createEmptyProject(cleanName,cleanPassword);
+  render();
+  toast('Новый ГКИД создан. Включён режим редактирования.');
+}
+
+function renameObject(){
+  if(!editGuard('Переименование объекта доступно только в режиме редактирования.')) return;
+
+  const currentName = normalizeObjectName(state.objectName);
+  const newName = prompt('Введите название объекта:', currentName);
+
+  if(newName === null) return;
+
+  const cleanName = normalizeObjectName(newName);
+
+  if(!cleanName){
+    toast('Название объекта не изменено: пустое название не допускается.');
+    return;
+  }
+
+  state.objectName = cleanName;
+  markDirty();
+  renderObjectName();
+  toast('Название объекта изменено.');
+}
+
+function sortedChains(){
+  return [...state.chains]
+    .filter(c => c.visible !== false)
+    .sort((a,b) => (a.order ?? 0) - (b.order ?? 0));
+}
+
+function chainById(id){
+  return state.chains.find(c => c.id === id);
+}
+
+function itemById(id){
+  return state.items.find(i => i.id === id);
+}
+
+function visibleChainIndex(chainId){
+  return sortedChains().findIndex(c => c.id === chainId);
+}
+
+function itemMatchesTextFilter(item){
+  if(!state.filterText) return true;
+
+  const query = state.filterText.toLowerCase();
+  const num = (item.number || '').toLowerCase();
+  const title = (item.title || '').toLowerCase();
+  const sec = (item.section || '').toLowerCase();
+  const sys = (item.system || '').toLowerCase();
+  const idStatus = (item.status || 'Не начато').toLowerCase();
+  const smr = (item.smrStatus || DEFAULT_SMR_STATUS).toLowerCase();
+
+  return num.includes(query) || title.includes(query) || sec.includes(query) || sys.includes(query) || idStatus.includes(query) || smr.includes(query);
+}
+
+function itemMatchesFilter(item){
+  return itemMatchesIdFilter(item) && itemMatchesSmrFilter(item) && itemMatchesTextFilter(item);
+}
+
+function textSearchResults(){
+  if(!state.filterText) return [];
+
+  const chainOrder = new Map(sortedChains().map((c,idx) => [c.id,idx]));
+
+  return state.items
+    .filter(it => visibleChainIndex(it.chainId) >= 0 && shouldDrawItem(it) && itemMatchesTextFilter(it))
+    .sort((a,b) => {
+      const ca = chainOrder.has(a.chainId) ? chainOrder.get(a.chainId) : 999999;
+      const cb = chainOrder.has(b.chainId) ? chainOrder.get(b.chainId) : 999999;
+
+      return ca - cb
+        || parseDate(a.start) - parseDate(b.start)
+        || parseDate(a.finish) - parseDate(b.finish)
+        || String(a.number || '').localeCompare(String(b.number || ''),'ru')
+        || String(a.title || '').localeCompare(String(b.title || ''),'ru');
+    });
+}
+
+function updateSearchNavigation(){
+  if(!btnSearchPrev || !btnSearchNext || !searchNavInfo) return;
+
+  const queryActive = !!state.filterText;
+  const results = textSearchResults();
+  const hasResults = results.length > 0;
+
+  btnSearchPrev.disabled = !hasResults;
+  btnSearchNext.disabled = !hasResults;
+
+  if(!queryActive){
+    searchNavInfo.textContent = 'Введите текст для поиска';
+    return;
+  }
+
+  if(!hasResults){
+    searchNavInfo.textContent = 'Совпадений не найдено';
+    return;
+  }
+
+  const selectedIndex = results.findIndex(it => it.id === state.selectedItemId);
+
+  if(selectedIndex >= 0){
+    searchNavInfo.textContent = `Найдено: ${selectedIndex + 1}/${results.length}`;
+  }else{
+    searchNavInfo.textContent = `Найдено: ${results.length}. Нажмите «след.» или «пред.»`;
+  }
+}
+
+function centerItemInView(itemId,behavior='smooth'){
+  const item = itemById(itemId);
+
+  if(!item || visibleChainIndex(item.chainId) < 0 || !shouldDrawItem(item)) return;
+
+  const r = itemRect(item);
+  const svgWidth = Number(svg.getAttribute('width') || scrollWrap.scrollWidth || 0);
+  const svgHeight = Number(svg.getAttribute('height') || scrollWrap.scrollHeight || 0);
+
+  const maxLeft = Math.max(0,svgWidth - scrollWrap.clientWidth);
+  const maxTop = Math.max(0,svgHeight - scrollWrap.clientHeight);
+  const left = clamp(r.x + r.w / 2 - scrollWrap.clientWidth / 2,0,maxLeft);
+  const top = clamp(r.y + r.h / 2 - scrollWrap.clientHeight / 2,0,maxTop);
+
+  scrollWrap.scrollTo({left,top,behavior});
+  requestAnimationFrame(updateBottomMiniMapViewport);
+}
+
+function jumpToTextSearchResult(direction){
+  if(!state.filterText){
+    textSearchInput.focus();
+    toast('Введите текст для поиска.');
+    return;
+  }
+
+  const results = textSearchResults();
+
+  if(!results.length){
+    toast('Совпадения не найдены.');
+    updateSearchNavigation();
+    return;
+  }
+
+  let idx = results.findIndex(it => it.id === state.selectedItemId);
+
+  if(idx < 0){
+    idx = direction > 0 ? -1 : 0;
+  }
+
+  idx = direction > 0
+    ? (idx + 1) % results.length
+    : (idx - 1 + results.length) % results.length;
+
+  const item = results[idx];
+
+  state.searchCursor = idx;
+  state.selectedItemId = item.id;
+  state.selectedLinkId = null;
+
+  render();
+  requestAnimationFrame(() => centerItemInView(item.id));
+}
+
+function shouldDrawItem(item){
+  if(state.filterOnly){
+    return itemMatchesFilter(item);
+  }
+  return true;
+}
+
+function syncFilterControls(){
+  statusFilterTop.value = state.filterStatus;
+  statusFilterLeft.value = state.filterStatus;
+  smrFilterTop.value = state.filterSmr;
+  smrFilterLeft.value = state.filterSmr;
+  statusOnlyTop.checked = !!state.filterOnly;
+  statusOnlyLeft.checked = !!state.filterOnly;
+  textSearchInput.value = state.filterText;
+  clearSearchBtn.style.display = state.filterText ? 'block' : 'none';
+}
+
+function normalizeProjectPassword(value){
+  return String(value ?? '').trim();
+}
+
+function isViewMode(){
+  return state.mode !== 'edit';
+}
+
+function isEditMode(){
+  return state.mode === 'edit';
+}
+
+function editGuard(message='Это действие доступно только в режиме редактирования.'){
+  if(isEditMode()) return true;
+
+  toast(message + ' Нажмите «Редактирование» и введите пароль проекта.');
+  return false;
+}
+
+function applyAppMode(){
+  const view = isViewMode();
+  const btnView = document.getElementById('btnViewMode');
+  const btnEdit = document.getElementById('btnEditMode');
+
+  document.body.classList.toggle('view-mode',view);
+  document.body.classList.toggle('edit-mode',!view);
+
+  if(btnView) btnView.classList.toggle('active',view);
+  if(btnEdit) btnEdit.classList.toggle('active',!view);
+
+  document.querySelectorAll('.edit-only').forEach(el => {
+    el.disabled = view;
+    el.title = view
+      ? 'Доступно только в режиме редактирования'
+      : '';
+  });
+
+  if(view){
+    state.linkMode = false;
+    state.linkSourceId = null;
+
+    const linkBtn = document.getElementById('btnLinkMode');
+    if(linkBtn) linkBtn.classList.remove('active');
+
+    closeModals();
+  }
+}
+
+function setViewMode(){
+  state.mode = 'view';
+  applyAppMode();
+  render();
+  toast('Включён режим просмотра.');
+}
+
+function requestEditMode(){
+  const pass = prompt('Введите пароль проекта для режима редактирования:', '');
+
+  if(pass === null) return;
+
+  if(normalizeProjectPassword(pass) !== normalizeProjectPassword(state.projectPassword || 'admin')){
+    toast('Неверный пароль. Режим редактирования не включён.');
+    return;
+  }
+
+  state.mode = 'edit';
+  applyAppMode();
+  render();
+  toast('Включён режим редактирования.');
+}
+
+function setCombinedFilters(status=state.filterStatus,smr=state.filterSmr,only=state.filterOnly){
+  state.filterStatus = status || '';
+  state.filterSmr = smr || '';
+  state.filterOnly = !!only && !!(state.filterStatus || state.filterSmr);
+  state.searchCursor = -1;
+  syncFilterControls();
+  render();
+}
+
+function setStatusFilter(status,only=state.filterOnly){
+  setCombinedFilters(status,state.filterSmr,only);
+}
+
+function setSmrFilter(smr,only=state.filterOnly){
+  setCombinedFilters(state.filterStatus,smr,only);
+}
+
+function resetStatusFilters(){
+  setCombinedFilters('','',false);
+}
+
+function buildLayout(){
+  const chainY = {};
+  const chainH = {};
+  const itemLane = {};
+  let y = TIMELINE_H;
+
+  for(const c of sortedChains()){
+    const items = state.items
+      .filter(it => it.chainId === c.id && shouldDrawItem(it))
+      .sort((a,b) => parseDate(a.start) - parseDate(b.start) || parseDate(a.finish) - parseDate(b.finish));
+
+    const laneFinish = [];
+
+    for(const it of items){
+      let lane = 0;
+
+      for(; lane < laneFinish.length; lane++){
+        if(parseDate(laneFinish[lane]) < parseDate(it.start)) break;
+      }
+
+      itemLane[it.id] = lane;
+      laneFinish[lane] = it.finish;
+    }
+
+    const laneCount = Math.max(1,laneFinish.length);
+    const h = Math.max(TRACK_H,ROW_TOP_PAD + laneCount * HEX_H + (laneCount - 1) * ROW_GAP + TRACK_BOTTOM_PAD);
+    chainY[c.id] = y;
+    chainH[c.id] = h;
+    y += h;
+  }
+
+  layoutCache = {chainY,chainH,itemLane,totalHeight:y};
+  return layoutCache;
+}
+
+function xFromDate(iso){
+  return LABEL_W + diffDays(iso,state.origin) * state.scale;
+}
+
+function dateFromX(x){
+  const days = Math.round((x - LABEL_W) / state.scale);
+  return addDays(state.origin,days);
+}
+
+function yForChain(chainId){
+  return layoutCache.chainY[chainId] ?? TIMELINE_H;
+}
+
+function chainAtY(y){
+  const chains = sortedChains();
+
+  for(const c of chains){
+    const cy = layoutCache.chainY[c.id] ?? TIMELINE_H;
+    const ch = layoutCache.chainH[c.id] ?? TRACK_H;
+
+    if(y >= cy && y < cy + ch) return c;
+  }
+
+  return chains[chains.length - 1] || null;
+}
+
+function itemRect(item){
+  let x1 = xFromDate(item.start);
+  let x2 = xFromDate(item.finish);
+
+  if(x2 < x1){
+    [x1,x2] = [x2,x1];
+  }
+
+  let w = Math.max(MIN_HEX_W,x2 - x1 || state.scale);
+
+  if(x2 - x1 < MIN_HEX_W){
+    x2 = x1 + MIN_HEX_W;
+  }
+
+  const lane = layoutCache.itemLane[item.id] || 0;
+  const y = yForChain(item.chainId) + ROW_TOP_PAD + lane * (HEX_H + ROW_GAP);
+
+  return {x:x1,y,w,h:HEX_H,x2,y2:y + HEX_H};
+}
+
+function hexPoints(r){
+  const cut = Math.min(22,Math.max(8,r.w * 0.16));
+
+  return [
+    [r.x + cut,r.y],
+    [r.x + r.w - cut,r.y],
+    [r.x + r.w,r.y + r.h / 2],
+    [r.x + r.w - cut,r.y + r.h],
+    [r.x + cut,r.y + r.h],
+    [r.x,r.y + r.h / 2]
+  ];
+}
+
+function pointInPolygon(x,y,pts){
+  let inside = false;
+
+  for(let i=0,j=pts.length - 1;i<pts.length;j=i++){
+    const xi = pts[i][0];
+    const yi = pts[i][1];
+    const xj = pts[j][0];
+    const yj = pts[j][1];
+
+    const intersect = ((yi > y) !== (yj > y)) &&
+      (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+
+    if(intersect) inside = !inside;
+  }
+
+  return inside;
+}
+
+function itemAtPoint(x,y){
+  for(let k=state.items.length - 1;k>=0;k--){
+    const it = state.items[k];
+
+    if(visibleChainIndex(it.chainId) < 0 || !shouldDrawItem(it)) continue;
+
+    const r = itemRect(it);
+
+    if(x < r.x - 3 || x > r.x + r.w + 3 || y < r.y - 3 || y > r.y + r.h + 3) continue;
+
+    if(pointInPolygon(x,y,hexPoints(r))) return it;
+  }
+
+  return null;
+}
+
+function distPointToSegment(px,py,x1,y1,x2,y2){
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+
+  if(dx === 0 && dy === 0){
+    return Math.hypot(px - x1,py - y1);
+  }
+
+  let t = ((px - x1) * dx + (py - y1) * dy) / (dx * dx + dy * dy);
+  t = clamp(t,0,1);
+
+  return Math.hypot(px - (x1 + t * dx),py - (y1 + t * dy));
+}
+
+function linkAtPoint(x,y){
+  let best = null;
+  let bestDist = 10;
+
+  for(const l of state.links){
+    const a = itemById(l.sourceId);
+    const b = itemById(l.targetId);
+
+    if(!a || !b) continue;
+    if(!shouldDrawItem(a) || !shouldDrawItem(b)) continue;
+
+    const ar = itemRect(a);
+    const br = itemRect(b);
+
+    const x1 = ar.x + ar.w;
+    const y1 = ar.y + ar.h / 2;
+    const x2 = br.x;
+    const y2 = br.y + br.h / 2;
+
+    const d = distPointToSegment(x,y,x1,y1,x2,y2);
+
+    if(d < bestDist){
+      bestDist = d;
+      best = l;
+    }
+  }
+
+  return best;
+}
+
+function textWidthApprox(text){
+  return String(text).length * 7.1;
+}
+
+function fitText(text,maxWidth){
+  text = String(text || '').trim();
+
+  if(maxWidth < 15) return '...';
+  if(textWidthApprox(text) <= maxWidth) return text;
+  if(maxWidth < 30) return '...';
+
+  const ell = '...';
+  let lo = 0;
+  let hi = text.length;
+
+  while(lo < hi){
+    const mid = Math.ceil((lo + hi) / 2);
+    if(textWidthApprox(text.slice(0,mid) + ell) <= maxWidth){
+      lo = mid;
+    }else{
+      hi = mid - 1;
+    }
+  }
+
+  return lo <= 0 ? '...' : text.slice(0,lo).trimEnd() + ell;
+}
+
+function fitTextWithEllipsis(text,maxWidth){
+  return fitText(text,maxWidth);
+}
+
+function splitChainLegendText(text,maxWidth,maxLines=2){
+  text = String(text || '').trim();
+
+  if(!text) return [''];
+  if(maxLines < 2) return [fitTextWithEllipsis(text,maxWidth)];
+
+  const words = text.split(/\s+/).filter(Boolean);
+  const lines = [];
+  let current = '';
+
+  for(const word of words){
+    const candidate = current ? `${current} ${word}` : word;
+
+    if(textWidthApprox(candidate) <= maxWidth){
+      current = candidate;
+      continue;
+    }
+
+    if(current){
+      lines.push(current);
+      current = word;
+    }else{
+      lines.push(fitTextWithEllipsis(word,maxWidth));
+      current = '';
+    }
+
+    if(lines.length === maxLines - 1){
+      break;
+    }
+  }
+
+  if(lines.length < maxLines){
+    const usedText = lines.join(' ');
+    let rest = text;
+
+    if(usedText){
+      rest = text.slice(usedText.length).trim();
+    }else{
+      rest = current || text;
+    }
+
+    if(!rest && current) rest = current;
+
+    lines.push(fitTextWithEllipsis(rest,maxWidth));
+  }else{
+    const usedText = lines.join(' ');
+    const rest = text.slice(usedText.length).trim();
+
+    if(rest){
+      lines[lines.length - 1] = fitTextWithEllipsis(`${lines[lines.length - 1]} ${rest}`,maxWidth);
+    }
+  }
+
+  return lines.slice(0,maxLines);
+}
+
+function chainLegendTitleAttrs(chain){
+  const name = escapeXml(chain?.name || '');
+  return name ? `<title>${name}</title>` : '';
+}
+
+function determineRange(){
+  let min = state.origin;
+  let max = addDays(state.origin,90);
+
+  for(const it of state.items){
+    if(parseDate(it.start) < parseDate(min)){
+      min = it.start;
+    }
+
+    if(parseDate(it.finish) > parseDate(max)){
+      max = it.finish;
+    }
+  }
+
+  const days = Math.max(30,diffDays(max,state.origin) + 30);
+  return {days};
+}
+
+function scaleText(){
+  if(state.scale >= 80) return `${Math.round(state.scale)} px/день`;
+  if(state.scale >= 12) return `${state.scale.toFixed(1)} px/день`;
+  if(state.scale >= 1) return `${state.scale.toFixed(2)} px/день`;
+
+  const daysPer100 = 100 / state.scale;
+
+  if(daysPer100 < 60) return `100 px ≈ ${Math.round(daysPer100)} дней`;
+  if(daysPer100 < 730) return `100 px ≈ ${(daysPer100 / 30.44).toFixed(1)} мес.`;
+
+  return `100 px ≈ ${(daysPer100 / 365.25).toFixed(1)} лет`;
+}
+
+function tickStepDays(){
+  const target = 110 / state.scale;
+
+  if(target <= 1) return 1;
+  if(target <= 2) return 2;
+  if(target <= 5) return 5;
+  if(target <= 10) return 10;
+  if(target <= 20) return 14;
+  if(target <= 45) return 30;
+  if(target <= 100) return 91;
+  if(target <= 250) return 182;
+
+  return 365;
+}
+
+function formatTick(d,step){
+  const day = String(d.getDate()).padStart(2,'0');
+  const mon = String(d.getMonth() + 1).padStart(2,'0');
+  const y = d.getFullYear();
+
+  if(step >= 365) return `${y}`;
+  if(step >= 91) return `${mon}.${y}`;
+  if(step >= 30) return `${mon}.${String(y).slice(2)}`;
+
+  return `${day}.${mon}`;
+}
+
+function render(){
+  originDate.value = state.origin;
+  scaleLabel.textContent = scaleText();
+
+  renderObjectName();
+  syncFilterControls();
+  applyAppMode();
+
+  const chains = sortedChains();
+  const layout = buildLayout();
+
+  updateSearchNavigation();
+  renderChainsList();
+  updateStatus();
+  renderBottomInfo();
+
+  const range = determineRange();
+  const width = Math.max(scrollWrap.clientWidth || 1000,LABEL_W + range.days * state.scale + 400);
+  const height = Math.max(scrollWrap.clientHeight || 700,layout.totalHeight + 120);
+
+  svg.setAttribute('width',width);
+  svg.setAttribute('height',height);
+
+  const parts = [];
+
+  parts.push(`<rect x="0" y="0" width="${width}" height="${height}" fill="#fff"/>`);
+
+  drawTimeline(parts,width,height);
+  drawTracks(parts,width,chains);
+  drawLinks(parts);
+  drawItems(parts);
+  drawStickyLabels(parts,width,height,chains);
+
+  root.innerHTML = parts.join('\n');
+  renderBottomMiniMap(width,height);
+}
+
+function drawTimeline(parts,width,height){
+  parts.push(`<rect x="0" y="0" width="${width}" height="${TIMELINE_H}" fill="#f8fafc"/>`);
+  parts.push(`<line x1="0" y1="${TIMELINE_H - 1}" x2="${width}" y2="${TIMELINE_H - 1}" stroke="#cbd5e1"/>`);
+
+  const step = tickStepDays();
+  const daysLeft = Math.floor((-LABEL_W) / state.scale) - 5;
+  const daysRight = Math.ceil((width - LABEL_W) / state.scale) + 5;
+  const first = Math.floor(daysLeft / step) * step;
+
+  for(let d=first; d<=daysRight; d+=step){
+    const x = LABEL_W + d * state.scale;
+    const date = parseDate(addDays(state.origin,d));
+    const major = (step < 30 && date.getDate() === 1) || step >= 30;
+
+    parts.push(`<line class="${major ? 'tick-major' : 'grid-line'}" x1="${x.toFixed(1)}" y1="0" x2="${x.toFixed(1)}" y2="${height}"/>`);
+    parts.push(`<text class="tick-text" x="${(x + 4).toFixed(1)}" y="20">${formatTick(date,step)}</text>`);
+  }
+}
+
+function drawTracks(parts,width,chains){
+  chains.forEach(c => {
+    const y = layoutCache.chainY[c.id] ?? TIMELINE_H;
+    const h = layoutCache.chainH[c.id] ?? TRACK_H;
+
+    parts.push(`<rect class="track-bg" x="0" y="${y}" width="${width}" height="${h}"/>`);
+    parts.push(`<line x1="0" y1="${y}" x2="${width}" y2="${y}" stroke="#e2e8f0"/>`);
+    parts.push(`<line x1="0" y1="${y + h}" x2="${width}" y2="${y + h}" stroke="#e2e8f0"/>`);
+  });
+}
+
+function drawStickyLabels(parts,width,height,chains){
+  const sx = scrollWrap ? clamp(scrollWrap.scrollLeft || 0,0,Math.max(0,width - LABEL_W)) : 0;
+  const x0 = sx;
+  const x1 = sx + LABEL_W;
+
+  parts.push(`<g class="sticky-chain-labels">`);
+
+  parts.push(`<rect class="sticky-bg" x="${x0}" y="0" width="${LABEL_W}" height="${TIMELINE_H}" fill="#f8fafc" opacity="0.98"/>`);
+  parts.push(`<line x1="${x0}" y1="${TIMELINE_H - 1}" x2="${x1}" y2="${TIMELINE_H - 1}" stroke="#cbd5e1"/>`);
+  parts.push(`<line x1="${x1}" y1="0" x2="${x1}" y2="${height}" stroke="#cbd5e1"/>`);
+  parts.push(`<text x="${x0 + 12}" y="22" fill="#0f172a" font-size="13" font-weight="700">Временная шкала</text>`);
+  parts.push(`<text x="${x0 + 12}" y="40" fill="#64748b" font-size="11">Начало: ${state.origin}</text>`);
+
+  chains.forEach(c => {
+    const y = layoutCache.chainY[c.id] ?? TIMELINE_H;
+    const h = layoutCache.chainH[c.id] ?? TRACK_H;
+    const rows = Math.max(1,Math.round((h - ROW_TOP_PAD - TRACK_BOTTOM_PAD + ROW_GAP) / (HEX_H + ROW_GAP)));
+
+    const legendTextX = x0 + 32;
+    const legendTextMaxW = LABEL_W - 46;
+    const legendLines = splitChainLegendText(c.name,legendTextMaxW,2);
+    const legendClipId = `chainLegendClip_${c.id}`;
+    const chainTitle = chainLegendTitleAttrs(c);
+
+    parts.push(`<clipPath id="${legendClipId}"><rect x="${legendTextX}" y="${y + 10}" width="${legendTextMaxW}" height="38"/></clipPath>`);
+    parts.push(`<g class="chain-legend-hit">${chainTitle}<rect x="${x0}" y="${y}" width="${LABEL_W}" height="${h}" fill="transparent" opacity="0"/>`);
+    parts.push(`<rect class="sticky-bg" x="${x0}" y="${y}" width="${LABEL_W}" height="${h}" fill="#ffffff" opacity="0.96"/>`);
+    parts.push(`<rect x="${x0}" y="${y}" width="${LABEL_W}" height="${h}" fill="${c.color}" opacity="0.12"/>`);
+    parts.push(`<line x1="${x0}" y1="${y}" x2="${x1}" y2="${y}" stroke="#e2e8f0"/>`);
+    parts.push(`<line x1="${x0}" y1="${y + h}" x2="${x1}" y2="${y + h}" stroke="#e2e8f0"/>`);
+    parts.push(`<line x1="${x1}" y1="${y}" x2="${x1}" y2="${y + h}" stroke="#cbd5e1"/>`);
+    parts.push(`<rect x="${x0 + 10}" y="${y + 14}" width="14" height="14" rx="7" fill="${c.color}" stroke="rgba(0,0,0,.2)"/>`);
+    parts.push(`<text class="chain-label" x="${legendTextX}" y="${y + 24}" clip-path="url(#${legendClipId})">${escapeXml(legendLines[0] || '')}</text>`);
+    parts.push(`<text class="chain-label" x="${legendTextX}" y="${y + 40}" clip-path="url(#${legendClipId})">${escapeXml(legendLines[1] || '')}</text>`);
+    parts.push(`<text class="chain-sub" x="${legendTextX}" y="${y + 59}">цепочка АОСР${rows > 1 ? ` · рядов: ${rows}` : ''}</text></g>`);
+  });
+
+  parts.push(`</g>`);
+}
+
+function drawLinks(parts){
+  for(const l of state.links){
+    const a = itemById(l.sourceId);
+    const b = itemById(l.targetId);
+
+    if(!a || !b) continue;
+    if(visibleChainIndex(a.chainId) < 0 || visibleChainIndex(b.chainId) < 0) continue;
+    if(!shouldDrawItem(a) || !shouldDrawItem(b)) continue;
+
+    const ar = itemRect(a);
+    const br = itemRect(b);
+
+    const x1 = ar.x + ar.w;
+    const y1 = ar.y + ar.h / 2;
+    const x2 = br.x;
+    const y2 = br.y + br.h / 2;
+
+    const selected = state.selectedLinkId === l.id ? ' selected' : '';
+    const hasActiveFilter = hasActiveVisualFilter();
+    const activeSmrFilter = state.filterSmr ? canonicalSmrStatus(state.filterSmr) : '';
+    const notStartedSmrFilterActive = activeSmrFilter === SMR_STATUS_NOT_STARTED;
+    const bothFullMatch = itemMatchesFilter(a) && itemMatchesFilter(b);
+    const filterClass = hasActiveFilter
+      ? (bothFullMatch ? (notStartedSmrFilterActive ? ' smr-not-started-link' : ' highlight') : ' dimmed')
+      : '';
+
+    if(x2 < x1 + 18){
+      const midX = Math.max(x1 + 18,x2 + 18);
+      parts.push(`<path class="link-line${selected}${filterClass}" d="M ${x1} ${y1} C ${midX} ${y1}, ${midX} ${y2}, ${x2} ${y2}" marker-end="url(#arrow)"/>`);
+    }else{
+      parts.push(`<line class="link-line${selected}${filterClass}" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" marker-end="url(#arrow)"/>`);
+    }
+  }
+}
+
+function drawItems(parts){
+  for(const it of state.items){
+    if(visibleChainIndex(it.chainId) < 0 || !shouldDrawItem(it)) continue;
+
+    const c = chainById(it.chainId);
+    const r = itemRect(it);
+    const pts = hexPoints(r).map(p => p.join(',')).join(' ');
+    const cls = ['aosr'];
+
+    const idMatch = itemMatchesIdFilter(it);
+    const smrMatch = itemMatchesSmrFilter(it);
+    const textMatch = itemMatchesTextFilter(it);
+    const fullMatch = idMatch && smrMatch && textMatch;
+    const activeSmrFilter = state.filterSmr ? canonicalSmrStatus(state.filterSmr) : '';
+    const partialMatch = (state.filterStatus && idMatch) || (state.filterSmr && smrMatch);
+    const notStartedSmrMatch = state.filterSmr && activeSmrFilter === SMR_STATUS_NOT_STARTED && smrMatch;
+    const greenSmrMatch = state.filterSmr && activeSmrFilter && activeSmrFilter !== SMR_STATUS_NOT_STARTED && smrMatch;
+
+    if(state.selectedItemId === it.id) cls.push('selected');
+    if(state.linkMode && state.linkSourceId === it.id) cls.push('source');
+    if(state.filterStatus && idMatch) cls.push('id-filter-match');
+    if(greenSmrMatch) cls.push('smr-filter-match');
+    if(notStartedSmrMatch) cls.push('smr-not-started-match');
+
+    if(hasActiveVisualFilter()){
+      if(notStartedSmrMatch){
+        cls.push('smr-not-started-match');
+      }else if(greenSmrMatch){
+        cls.push('highlight');
+      }else if(fullMatch){
+        cls.push('highlight');
+      }else if(partialMatch){
+        cls.push('partial-highlight');
+      }else{
+        cls.push('dimmed');
+      }
+    }
+
+    const text = fitText(it.title,r.w - 24);
+    const fillColor = (state.filterStatus && idMatch) ? idStatusColor(it.status || 'Не начато') : (c?.color || '#e2e8f0');
+
+    const title = `${it.number || ''}
+${it.title}
+${it.start} — ${it.finish}
+Статус ИД: ${it.status || 'Не начато'}
+Статус СМР: ${normalizeSmrStatus(it.smrStatus)}
+Сумма СМР: ${normalizeSmrCost(it.smrCost) || 'не указана'} руб`;
+
+    const handleY = r.y + 5;
+
+    parts.push(`<g class="${cls.join(' ')}" data-id="${it.id}">`);
+    parts.push(`<title>${escapeXml(title)}</title>`);
+    parts.push(`<polygon class="hex" points="${pts}" fill="${fillColor}"/>`);
+    parts.push(`<polygon class="hit" points="${pts}"/>`);
+    parts.push(`<text x="${r.x + r.w / 2}" y="${r.y + r.h / 2 + 4}" text-anchor="middle">${escapeXml(text)}</text>`);
+
+    if(r.w >= 66 && it.number){
+      parts.push(`<text x="${r.x + r.w / 2}" y="${r.y + 12}" text-anchor="middle" font-size="10" fill="#334155">${escapeXml(fitText(it.number,r.w - 20))}</text>`);
+    }
+
+    if(r.w >= 42){
+      parts.push(`<rect class="resize-handle" data-handle="left" x="${r.x + 4}" y="${handleY}" width="${HANDLE_W}" height="${r.h - 10}" rx="3"/>`);
+      parts.push(`<rect class="resize-handle" data-handle="right" x="${r.x + r.w - HANDLE_W - 4}" y="${handleY}" width="${HANDLE_W}" height="${r.h - 10}" rx="3"/>`);
+    }
+
+    parts.push(`</g>`);
+  }
+}
+
+function renderChainsList(){
+  const box = document.getElementById('chainsList');
+  box.innerHTML = '';
+
+  const sorted = sortedChains();
+
+  sorted.forEach((c,idx) => {
+    const div = document.createElement('div');
+    div.className = 'chain-row';
+
+    div.innerHTML = `
+      <span class="chain-color" style="background:${c.color}"></span>
+      <span class="chain-name" title="${escapeXml(c.name)}">${escapeXml(c.name)}</span>
+      <div class="chain-nav">
+        <button class="small btn-chain-order" data-dir="up" data-idx="${idx}" title="Переместить выше" ${idx===0?'disabled':''}>↑</button>
+        <button class="small btn-chain-order" data-dir="down" data-idx="${idx}" title="Переместить ниже" ${idx===sorted.length-1?'disabled':''}>↓</button>
+      </div>
+      <button class="small" data-edit-chain="${c.id}">✎</button>
+    `;
+
+    box.appendChild(div);
+  });
+
+  box.querySelectorAll('[data-edit-chain]').forEach(btn => {
+    btn.addEventListener('click',() => openChainModal(btn.dataset.editChain));
+  });
+
+  box.querySelectorAll('.btn-chain-order').forEach(btn => {
+    btn.addEventListener('click',e => {
+      e.stopPropagation();
+      moveChainOrder(parseInt(btn.dataset.idx),btn.dataset.dir);
+    });
+  });
+}
+
+function moveChainOrder(index,direction){
+  const sorted = sortedChains();
+  const targetIndex = direction === 'up' ? index - 1 : index + 1;
+
+  if(targetIndex < 0 || targetIndex >= sorted.length) return;
+
+  const temp = sorted[index].order;
+  sorted[index].order = sorted[targetIndex].order;
+  sorted[targetIndex].order = temp;
+
+  markDirty();
+  render();
+}
+
+function updateStatus(){
+  statusBox.className = 'status' + (state.linkMode ? ' link' : '');
+
+  const filterParts = [];
+
+  if(state.filterStatus) filterParts.push(`ИД: <b>${escapeXml(state.filterStatus)}</b>`);
+  if(state.filterSmr) filterParts.push(`СМР: <b>${escapeXml(state.filterSmr)}</b>`);
+  if(state.filterText) filterParts.push(`текст: <b>${escapeXml(state.filterText)}</b>`);
+
+  const filterText = filterParts.length
+    ? `<br><br>Активные фильтры (${filterParts.join(', ')})${state.filterOnly ? ' · показано только совпадение условий' : ' · подсветка'}`
+    : '';
+
+  const modeLine = isViewMode()
+    ? '<b>Режим просмотра.</b> Можно изучать карту, выбирать АОСР, двигать карту, менять масштаб, использовать поиск, фильтры и экспорт CSV. Редактирование заблокировано.'
+    : '<b>Режим редактирования.</b> Можно добавлять, двигать, связывать и править АОСР, цепочки и документы.';
+
+  if(state.linkMode){
+    if(state.linkSourceId){
+      const it = itemById(state.linkSourceId);
+      statusBox.innerHTML = `${modeLine}<br><br>Режим связей: первый АОСР выбран:<br><b>${escapeXml(it?.title || '')}</b><br>Теперь кликни второй АОСР.${filterText}`;
+    }else{
+      statusBox.innerHTML = `${modeLine}<br><br>Режим связей: кликни первый АОСР. Затем кликни второй АОСР.${filterText}`;
+    }
+  }else if(state.selectedItemId){
+    const it = itemById(state.selectedItemId);
+    statusBox.innerHTML = `${modeLine}<br><br>Выбран АОСР:<br><b>${escapeXml(it?.title || '')}</b>${filterText}`;
+  }else if(state.selectedLinkId){
+    statusBox.innerHTML = `${modeLine}<br><br>Выбрана связь.${isEditMode() ? ' Нажми Delete, чтобы удалить.' : ' Удаление доступно только в режиме редактирования.'}${filterText}`;
+  }else{
+    statusBox.innerHTML = `${modeLine}${filterText}`;
+  }
+}
+
+
+function bottomMiniMapHtml(){
+  return `
+    <div id="bottomMiniMap" class="bottom-minimap" title="Мини-карта ГКИД. Кликни по мини-карте, чтобы перейти к нужной области карты.">
+      <div class="bottom-minimap-head">
+        <span>Мини-карта</span>
+        <span id="bottomMiniMapCount"></span>
+      </div>
+      <div id="bottomMiniMapBody" class="bottom-minimap-body"></div>
+    </div>
+  `;
+}
+
+function keepBottomMiniMapInView(){
+  const mini = document.getElementById('bottomMiniMap');
+  if(!mini || !bottomInfo) return;
+
+  // Нижняя карточка может иметь горизонтальную прокрутку из-за широких таблиц.
+  // Смещаем мини-карту обратно на величину scrollLeft, чтобы она всегда оставалась
+  // в видимой правой части нижней панели, а не уезжала вместе с содержимым.
+  mini.style.transform = `translateX(${bottomInfo.scrollLeft || 0}px)`;
+}
+
+function renderBottomMiniMap(svgWidth,svgHeight){
+  const body = document.getElementById('bottomMiniMapBody');
+  const count = document.getElementById('bottomMiniMapCount');
+
+  if(!body) return;
+
+  svgWidth = Number(svgWidth || svg.getAttribute('width') || 1600);
+  svgHeight = Number(svgHeight || svg.getAttribute('height') || 900);
+
+  const w = 270;
+  const h = 130;
+  const sx = svgWidth > 0 ? w / svgWidth : 1;
+  const sy = svgHeight > 0 ? h / svgHeight : 1;
+  const parts = [];
+  const visibleItems = state.items.filter(it => visibleChainIndex(it.chainId) >= 0 && shouldDrawItem(it));
+
+  parts.push(`<svg viewBox="0 0 ${w} ${h}" data-svg-width="${svgWidth}" data-svg-height="${svgHeight}" xmlns="http://www.w3.org/2000/svg">`);
+  parts.push(`<rect x="0" y="0" width="${w}" height="${h}" fill="#fff"/>`);
+
+  sortedChains().forEach(c => {
+    const y = (layoutCache.chainY[c.id] || 0) * sy;
+    const rh = Math.max(1,(layoutCache.chainH[c.id] || TRACK_H) * sy);
+    parts.push(`<rect class="mini-chain" x="0" y="${y.toFixed(2)}" width="${w}" height="${rh.toFixed(2)}" fill="${escapeXml(c.color || '#e2e8f0')}"/>`);
+  });
+
+  visibleItems.forEach(it => {
+    const r = itemRect(it);
+    const selected = state.selectedItemId === it.id;
+    parts.push(`<rect class="${selected ? 'mini-selected' : 'mini-item'}" x="${(r.x * sx).toFixed(2)}" y="${(r.y * sy).toFixed(2)}" width="${Math.max(2,r.w * sx).toFixed(2)}" height="${Math.max(2,r.h * sy).toFixed(2)}" rx="1"/>`);
+  });
+
+  const vx = (scrollWrap.scrollLeft || 0) * sx;
+  const vy = (scrollWrap.scrollTop || 0) * sy;
+  const vw = Math.max(8,(scrollWrap.clientWidth || 0) * sx);
+  const vh = Math.max(8,(scrollWrap.clientHeight || 0) * sy);
+
+  parts.push(`<rect id="bottomMiniViewport" class="mini-viewport" x="${vx.toFixed(2)}" y="${vy.toFixed(2)}" width="${Math.min(w,vw).toFixed(2)}" height="${Math.min(h,vh).toFixed(2)}"/>`);
+  parts.push(`</svg>`);
+
+  body.innerHTML = parts.join('');
+  body.dataset.svgWidth = String(svgWidth);
+  body.dataset.svgHeight = String(svgHeight);
+
+  if(count) count.textContent = `${visibleItems.length} АОСР`;
+
+  body.onclick = evt => {
+    const rect = body.getBoundingClientRect();
+    const fullW = Number(body.dataset.svgWidth || svg.getAttribute('width') || 1);
+    const fullH = Number(body.dataset.svgHeight || svg.getAttribute('height') || 1);
+    const x = clamp((evt.clientX - rect.left) / rect.width,0,1);
+    const y = clamp((evt.clientY - rect.top) / rect.height,0,1);
+
+    scrollWrap.scrollTo({
+      left:Math.max(0,x * fullW - scrollWrap.clientWidth / 2),
+      top:Math.max(0,y * fullH - scrollWrap.clientHeight / 2),
+      behavior:'smooth'
+    });
+
+    requestAnimationFrame(updateBottomMiniMapViewport);
+  };
+
+  keepBottomMiniMapInView();
+}
+
+function updateBottomMiniMapViewport(){
+  const body = document.getElementById('bottomMiniMapBody');
+  const viewport = document.getElementById('bottomMiniViewport');
+
+  if(!body || !viewport) return;
+
+  const svgWidth = Number(body.dataset.svgWidth || svg.getAttribute('width') || 1);
+  const svgHeight = Number(body.dataset.svgHeight || svg.getAttribute('height') || 1);
+
+  if(!svgWidth || !svgHeight) return;
+
+  const w = 270;
+  const h = 130;
+  const sx = w / svgWidth;
+  const sy = h / svgHeight;
+
+  const vx = (scrollWrap.scrollLeft || 0) * sx;
+  const vy = (scrollWrap.scrollTop || 0) * sy;
+  const vw = Math.max(8,(scrollWrap.clientWidth || 0) * sx);
+  const vh = Math.max(8,(scrollWrap.clientHeight || 0) * sy);
+
+  viewport.setAttribute('x',vx.toFixed(2));
+  viewport.setAttribute('y',vy.toFixed(2));
+  viewport.setAttribute('width',Math.min(w,vw).toFixed(2));
+  viewport.setAttribute('height',Math.min(h,vh).toFixed(2));
+
+  keepBottomMiniMapInView();
+}
+
+function renderBottomDocRows(it){
+  const allDocs = ensureItemDocs(it,false);
+  const filter = normalizeBottomDocFilterForItem(it);
+
+  if(!allDocs.length){
+    return `<div class="bottom-doc-empty">Комплект документов пока не задан. Добавьте документ прямо здесь или откройте полную карточку АОСР.</div>`;
+  }
+
+  const docs = filter === '__all__'
+    ? allDocs
+    : allDocs.filter(d => (d.type || 'Другое') === filter);
+
+  if(!docs.length){
+    return `<div class="bottom-doc-empty">По выбранной категории документы отсутствуют. Можно добавить документ через панель выше.</div>`;
+  }
+
+  return `<div class="bottom-doc-list">${docs.map(d => `
+    <div class="bottom-doc-row" title="${escapeXml((d.type || 'Другое') + ': ' + (d.name || ''))}">
+      <input type="checkbox" class="bottom-doc-check" data-doc-id="${escapeXml(d.id)}" ${d.present ? 'checked' : ''} title="Документ есть в наличии" />
+      <div class="bottom-doc-type" title="${escapeXml(d.type || 'Другое')}">${escapeXml(d.type || 'Другое')}</div>
+      <input class="bottom-doc-name-input" data-doc-id="${escapeXml(d.id)}" value="${escapeXml(d.name || '')}" placeholder="Название документа" />
+      <div class="bottom-doc-state ${d.present ? 'ok' : ''}">${d.present ? 'есть' : 'нет'}</div>
+      <button class="bottom-doc-del" data-doc-id="${escapeXml(d.id)}" type="button" title="Удалить">×</button>
+    </div>
+  `).join('')}</div>`;
+}
+
+function renderBottomInfo(){
+  const it = state.selectedItemId ? itemById(state.selectedItemId) : null;
+
+  if(!it){
+    bottomInfo.innerHTML = `
+      <div class="bottom-title">Карточка АОСР</div>
+      <div class="info-empty">Кликни по шестиугольнику АОСР — здесь появится нижняя карточка с номером, основным статусом ИД, статусом СМР, суммой СМР и комплектом документов.</div>
+      ${bottomMiniMapHtml()}
+    `;
+    renderBottomMiniMap(Number(svg.getAttribute('width') || 1600),Number(svg.getAttribute('height') || 900));
+    return;
+  }
+
+  const chainName = chainById(it.chainId)?.name || '';
+  state.bottomDocFilter = normalizeBottomDocFilterForItem(it);
+  const summary = docsSummary(it);
+
+  bottomInfo.innerHTML = `
+    <div class="bottom-card">
+      <div class="bottom-card-head">
+        <div class="bottom-card-title" title="${escapeXml(it.title || '')}">
+          Карточка АОСР: ${escapeXml(it.number || 'без номера')} — ${escapeXml(it.title || '')}
+        </div>
+        <div class="bottom-card-actions">
+          <button id="bottomAddTypicalDocs" class="small" type="button">Добавить типовые документы</button>
+          <button id="bottomOpenCard" class="small" type="button">Открыть полную карточку</button>
+          <button id="bottomClearSelection" class="small" type="button">Снять выделение</button>
+        </div>
+      </div>
+
+      ${bottomMiniMapHtml()}
+
+      <div class="bottom-card-body">
+        <div class="bottom-summary">
+          <div class="bottom-summary-top">
+            <div class="bottom-summary-number">
+              <div class="info-label">№ АОСР</div>
+              <div class="info-value" title="${escapeXml(it.number || '')}">${escapeXml(it.number || '')}</div>
+            </div>
+
+            <div class="bottom-summary-inline">
+              <div class="summary-inline-field">
+                <div class="info-label">Статус ИД</div>
+                <div class="info-value">
+                  <select id="bottomStatusSelect" class="info-status-select">
+                    ${ID_STATUSES.map(v => `<option ${v === (it.status || 'Не начато') ? 'selected' : ''}>${escapeXml(v)}</option>`).join('')}
+                  </select>
+                </div>
+              </div>
+
+              <div class="summary-inline-field">
+                <div class="info-label">Статус СМР</div>
+                <div class="info-value">
+                  <select id="bottomSmrStatusSelect" class="info-smr-select">
+                    ${SMR_STATUS_OPTIONS.map(v => `<option ${v === normalizeSmrStatus(it.smrStatus) ? 'selected' : ''}>${escapeXml(v)}</option>`).join('')}
+                  </select>
+                </div>
+              </div>
+
+              <div class="summary-inline-field">
+                <div class="info-label">Сумма СМР</div>
+                <div class="info-value">
+                  <div class="info-cost-inline">
+                    <input id="bottomSmrCostInput" class="info-cost-input" type="text" inputmode="decimal" value="${escapeXml(normalizeSmrCost(it.smrCost))}" placeholder="Введите сумму" />
+                    <span class="info-cost-unit">руб</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="bottom-detail-grid">
+            <div class="info-label">Название</div>
+            <div class="info-value wrap wide-value" title="${escapeXml(it.title || '')}">${escapeXml(it.title || '')}</div>
+
+            <div class="info-label">Начало</div>
+            <div class="info-value">${escapeXml(it.start || '')}</div>
+
+            <div class="info-label">Окончание</div>
+            <div class="info-value">${escapeXml(it.finish || '')}</div>
+
+            <div class="empty-cell"></div>
+            <div class="empty-cell"></div>
+
+            <div class="info-label">Цепочка</div>
+            <div class="info-value">${escapeXml(chainName)}</div>
+
+            <div class="info-label">Раздел</div>
+            <div class="info-value">${escapeXml(it.section || '')}</div>
+
+            <div class="info-label">Участок</div>
+            <div class="info-value">${escapeXml(it.system || '')}</div>
+
+            <div class="info-label">Примечание</div>
+            <div class="info-value wrap wide-value" title="${escapeXml(it.note || '')}">${escapeXml(it.note || '')}</div>
+          </div>
+        </div>
+
+        <div class="bottom-docs">
+          <div class="bottom-docs-head">
+            <div class="bottom-docs-title">Комплект документов / вложений</div>
+
+            <div class="bottom-docs-tools">
+              <div class="bottom-doc-add">
+                <select id="bottomNewDocType" title="Тип нового документа">
+                  ${DOC_TYPES.map(t => {
+                    const selected = (state.bottomDocFilter && state.bottomDocFilter !== '__all__' && state.bottomDocFilter === t) ? 'selected' : '';
+                    return `<option ${selected}>${escapeXml(t)}</option>`;
+                  }).join('')}
+                </select>
+
+                <input id="bottomNewDocName" placeholder="Название нового документа" />
+
+                <button id="bottomAddDocBtn" class="small" type="button">+ Добавить</button>
+              </div>
+
+              <select id="bottomDocFilterSelect" class="bottom-doc-filter" title="Фильтр по категории документа">
+                ${bottomDocFilterOptionsHtml(state.bottomDocFilter || '__all__',it)}
+              </select>
+
+              <div class="bottom-docs-summary">${escapeXml(summary.text)}</div>
+            </div>
+          </div>
+
+          ${renderBottomDocRows(it)}
+        </div>
+      </div>
+    </div>
+  `;
+
+  const sel = document.getElementById('bottomStatusSelect');
+  if(sel){
+    sel.addEventListener('change',() => {
+      it.status = sel.value;
+      markDirty();
+      render();
+    });
+  }
+
+  const smrSel = document.getElementById('bottomSmrStatusSelect');
+  if(smrSel){
+    smrSel.addEventListener('change',() => {
+      it.smrStatus = normalizeSmrStatus(smrSel.value);
+      markDirty();
+      render();
+    });
+  }
+
+  const costInput = document.getElementById('bottomSmrCostInput');
+  if(costInput){
+    const syncCost = () => {
+      it.smrCost = normalizeSmrCost(costInput.value);
+      markDirty();
+    };
+
+    costInput.addEventListener('input',syncCost);
+    costInput.addEventListener('change',syncCost);
+  }
+
+  const openBtn = document.getElementById('bottomOpenCard');
+  if(openBtn){
+    openBtn.addEventListener('click',() => openAosrModal(it.id));
+  }
+
+  const clearBtn = document.getElementById('bottomClearSelection');
+  if(clearBtn){
+    clearBtn.addEventListener('click',() => {
+      state.selectedItemId = null;
+      render();
+    });
+  }
+
+  const typicalBtn = document.getElementById('bottomAddTypicalDocs');
+  if(typicalBtn){
+    typicalBtn.addEventListener('click',() => {
+      const docs = ensureItemDocs(it,false);
+      const added = uniqueDocs(docs,DEFAULT_DOC_TEMPLATES);
+      markDirty();
+
+      if(added.length){
+        renderBottomInfo();
+        toast(`Добавлено типовых документов: ${added.length}.`);
+      }else{
+        toast('Типовые документы уже есть в комплекте.');
+      }
+    });
+  }
+
+  const filterSel = document.getElementById('bottomDocFilterSelect');
+  if(filterSel){
+    filterSel.addEventListener('change',() => {
+      state.bottomDocFilter = filterSel.value || '__all__';
+      renderBottomInfo();
+    });
+  }
+
+  const bottomAddDocBtn = document.getElementById('bottomAddDocBtn');
+  const bottomNewDocType = document.getElementById('bottomNewDocType');
+  const bottomNewDocName = document.getElementById('bottomNewDocName');
+
+  if(bottomAddDocBtn && bottomNewDocType && bottomNewDocName){
+    const addBottomDoc = () => {
+      const type = bottomNewDocType.value || 'Другое';
+      const name = bottomNewDocName.value.trim();
+
+      if(!name){
+        toast('Введите название документа.');
+        bottomNewDocName.focus();
+        return;
+      }
+
+      const docs = ensureItemDocs(it,false);
+      docs.push(makeDoc(type,name,false));
+
+      bottomNewDocName.value = '';
+
+      markDirty();
+      renderBottomInfo();
+      toast('Документ добавлен.');
+    };
+
+    bottomAddDocBtn.addEventListener('click',addBottomDoc);
+
+    bottomNewDocName.addEventListener('keydown',e => {
+      if(e.key === 'Enter'){
+        e.preventDefault();
+        addBottomDoc();
+      }
+    });
+  }
+
+  bottomInfo.querySelectorAll('.bottom-doc-name-input').forEach(inp => {
+    inp.addEventListener('input',() => {
+      const docs = ensureItemDocs(it,false);
+      const doc = docs.find(d => d.id === inp.dataset.docId);
+
+      if(!doc) return;
+
+      doc.name = inp.value;
+      markDirty();
+    });
+
+    inp.addEventListener('change',() => {
+      const docs = ensureItemDocs(it,false);
+      const doc = docs.find(d => d.id === inp.dataset.docId);
+
+      if(!doc) return;
+
+      doc.name = inp.value.trim();
+      inp.value = doc.name;
+
+      markDirty();
+    });
+  });
+
+  bottomInfo.querySelectorAll('.bottom-doc-del').forEach(btn => {
+    btn.addEventListener('click',() => {
+      const docId = btn.dataset.docId;
+      const docs = ensureItemDocs(it,false);
+      const idx = docs.findIndex(d => d.id === docId);
+
+      if(idx < 0) return;
+
+      docs.splice(idx,1);
+      markDirty();
+      renderBottomInfo();
+      toast('Документ удалён.');
+    });
+  });
+
+  bottomInfo.querySelectorAll('.bottom-doc-check').forEach(ch => {
+    ch.addEventListener('change',() => {
+      const docs = ensureItemDocs(it,false);
+      const doc = docs.find(d => d.id === ch.dataset.docId);
+
+      if(!doc) return;
+
+      doc.present = ch.checked;
+
+      const row = ch.closest('.bottom-doc-row');
+      const stateLabel = row?.querySelector('.bottom-doc-state');
+
+      if(stateLabel){
+        stateLabel.textContent = doc.present ? 'есть' : 'нет';
+        stateLabel.classList.toggle('ok',doc.present);
+      }
+
+      const summary = docsSummary(it);
+      const summaryBox = bottomInfo.querySelector('.bottom-docs-summary');
+
+      if(summaryBox){
+        summaryBox.textContent = summary.text;
+      }
+
+      markDirty();
+    });
+  });
+
+  if(isViewMode()){
+    const disabledSelectors = [
+      '#bottomStatusSelect',
+      '#bottomSmrStatusSelect',
+      '#bottomSmrCostInput',
+      '#bottomAddTypicalDocs',
+      '#bottomOpenCard',
+      '#bottomNewDocType',
+      '#bottomNewDocName',
+      '#bottomAddDocBtn',
+      '.bottom-doc-check',
+      '.bottom-doc-name-input',
+      '.bottom-doc-del'
+    ].join(',');
+
+    bottomInfo.querySelectorAll(disabledSelectors).forEach(el => {
+      el.disabled = true;
+      el.classList.add('view-disabled');
+      el.title = 'Режим просмотра: изменение заблокировано';
+    });
+
+    const actions = bottomInfo.querySelector('.bottom-card-actions');
+    if(actions && !actions.querySelector('.view-note')){
+      actions.insertAdjacentHTML('afterbegin','<span class="view-note">Просмотр</span>');
+    }
+  }
+
+  renderBottomMiniMap(Number(svg.getAttribute('width') || 1600),Number(svg.getAttribute('height') || 900));
+}
+
+function markDirty(){
+  state.dirty = true;
+}
+
+function toast(msg){
+  const t = document.getElementById('toast');
+
+  t.textContent = msg;
+  t.classList.add('show');
+
+  clearTimeout(toast._timer);
+  toast._timer = setTimeout(() => t.classList.remove('show'),2200);
+}
+
+function setBottomPanelHeight(px){
+  const workspace = document.querySelector('.workspace');
+  const maxByWindow = Math.max(140,Math.floor((workspace?.clientHeight || window.innerHeight) * 0.72));
+  const h = Math.max(92,Math.min(maxByWindow,Math.round(px)));
+
+  bottomInfo.style.height = h + 'px';
+  bottomInfo.style.flexBasis = h + 'px';
+
+  try{
+    localStorage.setItem('gkid_bottom_panel_height',String(h));
+  }catch(e){}
+}
+
+function initBottomPanelResize(){
+  try{
+    const saved = Number(localStorage.getItem('gkid_bottom_panel_height'));
+    if(saved) setBottomPanelHeight(saved);
+  }catch(e){}
+
+  if(!bottomResizer) return;
+
+  let startY = 0;
+  let startH = 0;
+
+  const move = evt => {
+    evt.preventDefault();
+    const delta = startY - evt.clientY;
+    setBottomPanelHeight(startH + delta);
+  };
+
+  const up = () => {
+    document.removeEventListener('mousemove',move);
+    document.removeEventListener('mouseup',up);
+    document.body.classList.remove('resizing-bottom');
+    render();
+  };
+
+  bottomResizer.addEventListener('mousedown',evt => {
+    evt.preventDefault();
+    startY = evt.clientY;
+    startH = bottomInfo.getBoundingClientRect().height;
+    document.body.classList.add('resizing-bottom');
+    document.addEventListener('mousemove',move);
+    document.addEventListener('mouseup',up);
+  });
+
+  bottomResizer.addEventListener('dblclick',() => {
+    setBottomPanelHeight(330);
+    render();
+  });
+}
+
+function getSvgPoint(evt){
+  const pt = svg.createSVGPoint();
+
+  pt.x = evt.clientX;
+  pt.y = evt.clientY;
+
+  return pt.matrixTransform(svg.getScreenCTM().inverse());
+}
+
+function itemFromMouseEvent(evt){
+  const group = evt.target?.closest?.('g.aosr[data-id]');
+
+  if(group?.dataset?.id){
+    const byDom = itemById(group.dataset.id);
+    if(byDom) return byDom;
+  }
+
+  const p = getSvgPoint(evt);
+  return itemAtPoint(p.x,p.y);
+}
+
+function openAosrModalFromEvent(evt){
+  if(isViewMode()) return false;
+
+  const item = itemFromMouseEvent(evt);
+
+  if(!item || state.linkMode) return false;
+
+  evt.preventDefault();
+  evt.stopPropagation();
+
+  state.drag = null;
+  state.selectedItemId = item.id;
+  state.selectedLinkId = null;
+
+  openAosrModal(item.id);
+
+  return true;
+}
+
+svg.addEventListener('mousedown',evt => {
+  if(evt.detail >= 2 && openAosrModalFromEvent(evt)){
+    return;
+  }
+
+  const p = getSvgPoint(evt);
+  const item = itemAtPoint(p.x,p.y);
+
+  if(item){
+    if(isViewMode()){
+      state.selectedItemId = item.id;
+      state.selectedLinkId = null;
+      state.drag = null;
+      render();
+      evt.preventDefault();
+      return;
+    }
+
+    if(state.linkMode){
+      handleLinkClick(item);
+      evt.preventDefault();
+      return;
+    }
+
+    state.selectedItemId = item.id;
+    state.selectedLinkId = null;
+
+    const r = itemRect(item);
+    let mode = 'move';
+
+    if(p.x <= r.x + 15) mode = 'resize-left';
+    else if(p.x >= r.x + r.w - 15) mode = 'resize-right';
+
+    state.drag = {
+      itemId:item.id,
+      mode,
+      startX:p.x,
+      startY:p.y,
+      origStart:item.start,
+      origFinish:item.finish,
+      origChain:item.chainId,
+      moved:false
+    };
+
+    render();
+    evt.preventDefault();
+    return;
+  }
+
+  const link = linkAtPoint(p.x,p.y);
+
+  if(link && !state.linkMode){
+    state.selectedLinkId = link.id;
+    state.selectedItemId = null;
+    render();
+    evt.preventDefault();
+    return;
+  }
+
+  if(!state.linkMode){
+    state.selectedItemId = null;
+    state.selectedLinkId = null;
+    render();
+  }
+});
+
+window.addEventListener('mousemove',evt => {
+  if(isViewMode()){
+    state.drag = null;
+    return;
+  }
+
+  if(!state.drag) return;
+
+  const p = getSvgPoint(evt);
+  const d = state.drag;
+  const it = itemById(d.itemId);
+
+  if(!it) return;
+
+  const dxDays = Math.round((p.x - d.startX) / state.scale);
+
+  if(Math.abs(p.x - d.startX) > 2 || Math.abs(p.y - d.startY) > 2){
+    d.moved = true;
+  }
+
+  if(d.mode === 'move'){
+    it.start = addDays(d.origStart,dxDays);
+    it.finish = addDays(d.origFinish,dxDays);
+
+    const c = chainAtY(p.y);
+    if(c) it.chainId = c.id;
+  }else if(d.mode === 'resize-left'){
+    const ns = addDays(d.origStart,dxDays);
+    if(parseDate(ns) <= parseDate(it.finish)){
+      it.start = ns;
+    }
+  }else if(d.mode === 'resize-right'){
+    const nf = addDays(d.origFinish,dxDays);
+    if(parseDate(nf) >= parseDate(it.start)){
+      it.finish = nf;
+    }
+  }
+
+  markDirty();
+  render();
+});
+
+window.addEventListener('mouseup',() => {
+  state.drag = null;
+});
+
+svg.addEventListener('dblclick',evt => {
+  openAosrModalFromEvent(evt);
+});
+
+let scrollRenderQueued = false;
+
+scrollWrap.addEventListener('scroll',() => {
+  if(scrollRenderQueued) return;
+
+  scrollRenderQueued = true;
+
+  requestAnimationFrame(() => {
+    scrollRenderQueued = false;
+    render();
+  });
+});
+
+bottomInfo.addEventListener('scroll',() => {
+  keepBottomMiniMapInView();
+});
+
+scrollWrap.addEventListener('wheel',evt => {
+  if(evt.ctrlKey || evt.metaKey){
+    evt.preventDefault();
+
+    const rect = svg.getBoundingClientRect();
+    const mouseX = evt.clientX - rect.left;
+    const svgMouseX = mouseX / state.scale;
+
+    const factor = evt.deltaY < 0 ? 1.15 : 0.85;
+    const oldScale = state.scale;
+
+    state.scale = clamp(state.scale * factor,0.04,260);
+
+    if(state.scale !== oldScale){
+      const deltaX = svgMouseX * (state.scale - oldScale);
+      scrollWrap.scrollLeft += deltaX;
+      render();
+    }
+  }
+},{passive:false});
+
+function handleLinkClick(item){
+  if(!editGuard('Связывание АОСР доступно только в режиме редактирования.')) return;
+
+  if(!state.linkSourceId){
+    state.linkSourceId = item.id;
+    state.selectedItemId = item.id;
+    toast('Первый АОСР выбран. Кликните второй АОСР.');
+    render();
+    return;
+  }
+
+  if(state.linkSourceId === item.id){
+    toast('Нужно выбрать другой АОСР для связи.');
+    return;
+  }
+
+  const exists = state.links.some(l => l.sourceId === state.linkSourceId && l.targetId === item.id);
+
+  if(exists){
+    toast('Такая связь уже есть.');
+    return;
+  }
+
+  state.links.push({
+    id:uid('link'),
+    sourceId:state.linkSourceId,
+    targetId:item.id
+  });
+
+  state.linkSourceId = null;
+  state.selectedItemId = item.id;
+
+  markDirty();
+  render();
+  toast('Связь создана.');
+}
+
+function fillSelect(select,values,selected){
+  select.innerHTML = '';
+
+  values.forEach(v => {
+    const opt = document.createElement('option');
+    opt.value = v;
+    opt.textContent = v;
+    if(v === selected) opt.selected = true;
+    select.appendChild(opt);
+  });
+}
+
+function renderDocsList(docs){
+  const list = document.getElementById('docsList');
+  list.innerHTML = '';
+
+  docs.forEach(d => {
+    const row = document.createElement('div');
+    row.className = 'doc-row';
+    row.dataset.docId = d.id;
+
+    row.innerHTML = `
+      <input type="checkbox" class="doc-check" ${d.present ? 'checked' : ''} title="Документ есть в наличии" />
+      <select class="doc-type">
+        ${DOC_TYPES.map(t => `<option ${t === d.type ? 'selected' : ''}>${escapeXml(t)}</option>`).join('')}
+      </select>
+      <input class="doc-name" value="${escapeXml(d.name)}" placeholder="Название документа" />
+      <div class="doc-present ${d.present ? 'ok' : ''}">${d.present ? 'есть' : 'нет'}</div>
+      <button type="button" class="doc-del" title="Удалить документ">×</button>
+    `;
+
+    list.appendChild(row);
+  });
+
+  updateDocsProgress(docs);
+}
+
+function readDocsFromModal(){
+  const rows = [...document.querySelectorAll('#docsList .doc-row')];
+
+  return rows.map(row => ({
+    id:row.dataset.docId || uid('doc'),
+    type:row.querySelector('.doc-type')?.value || 'Другое',
+    name:row.querySelector('.doc-name')?.value.trim() || '',
+    present:!!row.querySelector('.doc-check')?.checked,
+    note:''
+  })).filter(d => d.name || d.type);
+}
+
+function setDocsInModal(docs){
+  window.__modalDocs = (Array.isArray(docs) ? docs : []).map(normalizeDoc);
+  renderDocsList(window.__modalDocs);
+}
+
+function refreshModalDocsFromDom(){
+  window.__modalDocs = readDocsFromModal();
+  updateDocsProgress(window.__modalDocs);
+}
+
+function addDocToModal(type,name,present=false){
+  const docs = readDocsFromModal();
+  docs.push(makeDoc(type || 'Другое',name || '',present));
+  setDocsInModal(docs);
+}
+
+function addTypicalDocsToModal(){
+  const docs = readDocsFromModal();
+  const added = uniqueDocs(docs,DEFAULT_DOC_TEMPLATES);
+  setDocsInModal(docs);
+
+  toast(added.length ? `Добавлено типовых документов: ${added.length}.` : 'Типовые документы уже есть в комплекте.');
+}
+
+function updateDocsProgress(docs){
+  const box = document.getElementById('docsProgress');
+
+  if(!box) return;
+
+  const total = docs.length;
+  const ready = docs.filter(d => d.present).length;
+  const missing = Math.max(0,total - ready);
+
+  box.textContent = total ? `Документы: ${ready}/${total} есть · нет: ${missing}` : 'Документы пока не заданы.';
+}
+
+function openAosrModal(id=null){
+  if(!editGuard('Открытие полной карточки для изменения доступно только в режиме редактирования.')) return;
+
+  fillChainSelect();
+
+  fillSelect(document.getElementById('aStatus'),ID_STATUSES,'Не начато');
+  fillSelect(document.getElementById('aSmrStatus'),SMR_STATUS_OPTIONS,DEFAULT_SMR_STATUS);
+  fillSelect(document.getElementById('newDocType'),DOC_TYPES,DOC_TYPES[0]);
+
+  document.getElementById('editId').value = id || '';
+  document.getElementById('modalTitle').textContent = id ? 'Редактировать АОСР' : 'Добавить АОСР';
+  document.getElementById('btnDeleteAosr').style.display = id ? '' : 'none';
+
+  if(id){
+    const it = itemById(id);
+
+    document.getElementById('aNumber').value = it.number || '';
+    document.getElementById('aTitle').value = it.title || '';
+    document.getElementById('aStart').value = it.start || state.origin;
+    document.getElementById('aFinish').value = it.finish || state.origin;
+    document.getElementById('aChain').value = it.chainId || '';
+    document.getElementById('aSection').value = it.section || '';
+    document.getElementById('aSystem').value = it.system || '';
+    document.getElementById('aStatus').value = it.status || 'Не начато';
+    document.getElementById('aSmrStatus').value = normalizeSmrStatus(it.smrStatus);
+    document.getElementById('aSmrCost').value = normalizeSmrCost(it.smrCost);
+    document.getElementById('aNote').value = it.note || '';
+
+    setDocsInModal(ensureItemDocs(it,false));
+  }else{
+    document.getElementById('aNumber').value = `АОСР №${state.items.length + 1}`;
+    document.getElementById('aTitle').value = '';
+    document.getElementById('aStart').value = state.origin;
+    document.getElementById('aFinish').value = addDays(state.origin,1);
+    document.getElementById('aChain').value = sortedChains()[0]?.id || '';
+    document.getElementById('aSection').value = '';
+    document.getElementById('aSystem').value = '';
+    document.getElementById('aStatus').value = 'Не начато';
+    document.getElementById('aSmrStatus').value = DEFAULT_SMR_STATUS;
+    document.getElementById('aSmrCost').value = '';
+    document.getElementById('aNote').value = '';
+
+    // Для нового АОСР документы не добавляются автоматически.
+    // Пользователь сам добавляет нужные документы вручную или кнопкой "Добавить типовые".
+    setDocsInModal([]);
+  }
+
+  document.getElementById('modalBackdrop').style.display = 'flex';
+  document.getElementById('aTitle').focus();
+}
+
+function fillChainSelect(){
+  const s = document.getElementById('aChain');
+  s.innerHTML = '';
+
+  sortedChains().forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c.id;
+    opt.textContent = c.name;
+    s.appendChild(opt);
+  });
+}
+
+function saveAosrModal(){
+  if(!editGuard('Сохранение АОСР доступно только в режиме редактирования.')) return;
+
+  if(!state.chains.length){
+    toast('Сначала создайте цепочку.');
+    return;
+  }
+
+  const id = document.getElementById('editId').value;
+  const start = document.getElementById('aStart').value;
+  const finish = document.getElementById('aFinish').value;
+  const title = document.getElementById('aTitle').value.trim();
+
+  if(!title){
+    toast('Введите наименование работ.');
+    return;
+  }
+
+  if(!start || !finish){
+    toast('Введите даты.');
+    return;
+  }
+
+  if(parseDate(finish) < parseDate(start)){
+    toast('Дата окончания раньше даты начала.');
+    return;
+  }
+
+  const obj = {
+    chainId:document.getElementById('aChain').value,
+    number:document.getElementById('aNumber').value.trim(),
+    title,
+    start,
+    finish,
+    section:document.getElementById('aSection').value.trim(),
+    system:document.getElementById('aSystem').value.trim(),
+    status:document.getElementById('aStatus').value,
+    smrStatus:normalizeSmrStatus(document.getElementById('aSmrStatus').value),
+    smrCost:normalizeSmrCost(document.getElementById('aSmrCost').value),
+    note:document.getElementById('aNote').value.trim(),
+    docs:readDocsFromModal()
+  };
+
+  if(id){
+    Object.assign(itemById(id),obj);
+    state.selectedItemId = id;
+  }else{
+    const newItem = {id:uid('aosr'),...obj};
+    state.items.push(newItem);
+    state.selectedItemId = newItem.id;
+  }
+
+  markDirty();
+  closeModals();
+  render();
+}
+
+function deleteItem(id){
+  if(!editGuard('Удаление АОСР доступно только в режиме редактирования.')) return;
+
+  const it = itemById(id);
+
+  if(!it) return;
+
+  if(!confirm(`Удалить АОСР?\n${it.title}`)) return;
+
+  state.items = state.items.filter(i => i.id !== id);
+  state.links = state.links.filter(l => l.sourceId !== id && l.targetId !== id);
+
+  if(state.selectedItemId === id) state.selectedItemId = null;
+  if(state.linkSourceId === id) state.linkSourceId = null;
+
+  markDirty();
+  render();
+}
+
+function openChainModal(id=null){
+  if(!editGuard('Изменение цепочек доступно только в режиме редактирования.')) return;
+
+  document.getElementById('chainEditId').value = id || '';
+  document.getElementById('btnDeleteChain').style.display = id ? '' : 'none';
+
+  if(id){
+    const c = chainById(id);
+    document.getElementById('chainName').value = c.name || '';
+    document.getElementById('chainColor').value = c.color || '#bfdbfe';
+  }else{
+    document.getElementById('chainName').value = `Цепочка ${state.chains.length + 1}`;
+    document.getElementById('chainColor').value = DEFAULT_COLORS[state.chains.length % DEFAULT_COLORS.length];
+  }
+
+  document.getElementById('chainModalBackdrop').style.display = 'flex';
+  document.getElementById('chainName').focus();
+}
+
+function saveChainModal(){
+  if(!editGuard('Сохранение цепочки доступно только в режиме редактирования.')) return;
+
+  const id = document.getElementById('chainEditId').value;
+  const name = document.getElementById('chainName').value.trim();
+  const color = document.getElementById('chainColor').value;
+
+  if(!name){
+    toast('Введите название цепочки.');
+    return;
+  }
+
+  if(id){
+    const c = chainById(id);
+    if(c){
+      c.name = name;
+      c.color = color;
+    }
+  }else{
+    const maxOrder = state.chains.reduce((m,c) => Math.max(m,c.order ?? 0),-1);
+    state.chains.push({
+      id:uid('chain'),
+      name,
+      color,
+      order:maxOrder + 1,
+      visible:true
+    });
+  }
+
+  markDirty();
+  closeModals();
+  render();
+}
+
+function deleteChainModal(){
+  if(!editGuard('Удаление цепочки доступно только в режиме редактирования.')) return;
+
+  const id = document.getElementById('chainEditId').value;
+
+  if(!id) return;
+
+  const c = chainById(id);
+
+  if(!c) return;
+
+  const hasItems = state.items.some(it => it.chainId === id);
+  const msg = hasItems
+    ? `В цепочке есть АОСР. Удалить цепочку и все её АОСР?\n${c.name}`
+    : `Удалить цепочку?\n${c.name}`;
+
+  if(!confirm(msg)) return;
+
+  const itemIds = new Set(state.items.filter(it => it.chainId === id).map(it => it.id));
+
+  state.items = state.items.filter(it => it.chainId !== id);
+  state.links = state.links.filter(l => !itemIds.has(l.sourceId) && !itemIds.has(l.targetId));
+  state.chains = state.chains.filter(x => x.id !== id);
+
+  if(!state.chains.length){
+    state.chains.push({
+      id:uid('chain'),
+      name:'Основная цепочка',
+      color:'#bfdbfe',
+      order:0,
+      visible:true
+    });
+  }
+
+  state.selectedItemId = null;
+  state.selectedLinkId = null;
+
+  markDirty();
+  closeModals();
+  render();
+}
+
+function closeModals(){
+  document.getElementById('modalBackdrop').style.display = 'none';
+  document.getElementById('chainModalBackdrop').style.display = 'none';
+}
+
+function projectData(){
+  normalizeProjectData();
+
+  return {
+    version:'gkid-1.8-view-edit-password',
+    objectName:state.objectName,
+    projectPassword:state.projectPassword || 'admin',
+    origin:state.origin,
+    scale:state.scale,
+    chains:state.chains,
+    items:state.items,
+    links:state.links
+  };
+}
+
+function saveJson(){
+  const name = normalizeObjectName(state.objectName) || 'ГКИД';
+  const safeName = name.replace(/[\\/:*?"<>|]+/g,'_').slice(0,80);
+  const content = JSON.stringify(projectData(),null,2);
+
+  downloadFile(`${safeName}.gkid`,content,'application/json;charset=utf-8');
+
+  state.dirty = false;
+  toast('ГКИД сохранён.');
+}
+
+function loadJsonFile(file){
+  const reader = new FileReader();
+
+  reader.onload = () => {
+    try{
+      const data = JSON.parse(reader.result);
+
+      state.objectName = normalizeObjectName(data.objectName || data.projectName || data.object || data.title || '');
+      state.projectPassword = normalizeProjectPassword(data.projectPassword || data.password || data.editPassword || 'admin') || 'admin';
+      state.mode = 'view';
+      state.origin = data.origin || state.origin;
+      state.scale = Number(data.scale || state.scale);
+      state.chains = Array.isArray(data.chains) ? data.chains : [];
+      state.items = Array.isArray(data.items) ? data.items : [];
+      state.links = Array.isArray(data.links) ? data.links : [];
+
+      if(!state.objectName){
+        state.objectName = 'Объект без названия';
+      }
+
+      if(!state.chains.length){
+        state.chains = [
+          {id:uid('chain'), name:'Основная цепочка', color:'#bfdbfe', order:0, visible:true}
+        ];
+      }
+
+      normalizeProjectData();
+
+      state.mode = 'view';
+      state.linkMode = false;
+      state.linkSourceId = null;
+      state.selectedItemId = null;
+      state.selectedLinkId = null;
+      state.dirty = false;
+      state.bottomDocFilter = '__all__';
+      state.filterStatus = '';
+      state.filterSmr = '';
+      state.filterOnly = false;
+      state.filterText = '';
+
+      document.getElementById('btnLinkMode').classList.remove('active');
+
+      render();
+      toast('Проект загружен.');
+    }catch(e){
+      toast('Не удалось загрузить файл: ' + e.message);
+    }
+  };
+
+  reader.readAsText(file,'utf-8');
+}
+
+function exportCsv(){
+  const docTypeColumns = csvDocTypeColumns();
+
+  const baseHeaders = [
+    'Название объекта',
+    'Номер АОСР',
+    'Наименование работ',
+    'Дата начала',
+    'Дата окончания',
+    'Цепочка',
+    'Раздел проекта',
+    'Участок/система',
+    'Статус ИД',
+    'Статус выполнения СМР',
+    'Сумма СМР, руб',
+    'Документы всего',
+    'Документы есть',
+    'Документы отсутствуют'
+  ];
+
+  const docHeaders = docTypeColumns.map(type => `Отсутствуют: ${type}`);
+
+  const headers = [
+    ...baseHeaders,
+    ...docHeaders,
+    'Примечание'
+  ];
+
+  const rows = state.items.map(it => {
+    const summary = docsSummary(it);
+    const groupedMissingDocs = missingDocsGroupedByType(it,docTypeColumns);
+
+    return [
+      state.objectName || '',
+      it.number || '',
+      it.title || '',
+      it.start || '',
+      it.finish || '',
+      chainById(it.chainId)?.name || '',
+      it.section || '',
+      it.system || '',
+      it.status || '',
+      normalizeSmrStatus(it.smrStatus),
+      normalizeSmrCost(it.smrCost),
+      summary.total,
+      summary.ready,
+      summary.missing,
+      ...docTypeColumns.map(type => csvMultilineNumberedList(groupedMissingDocs.get(type) || [])),
+      it.note || ''
+    ];
+  });
+
+  const csv = [headers,...rows]
+    .map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(';'))
+    .join('\r\n');
+
+  downloadFile('gkid_aosr.csv','\ufeff' + csv,'text/csv;charset=utf-8');
+}
+
+function downloadFile(name,content,type){
+  const blob = new Blob([content],{type});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+
+  a.href = url;
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+
+  setTimeout(() => URL.revokeObjectURL(url),500);
+}
+
+function zoom(factor){
+  state.scale = clamp(state.scale * factor,0.04,260);
+  render();
+}
+
+function fitAll(){
+  if(!state.items.length){
+    state.scale = 28;
+    render();
+    return;
+  }
+
+  let minStart = state.items[0].start;
+  let maxFinish = state.items[0].finish;
+
+  for(const it of state.items){
+    if(parseDate(it.start) < parseDate(minStart)) minStart = it.start;
+    if(parseDate(it.finish) > parseDate(maxFinish)) maxFinish = it.finish;
+  }
+
+  state.origin = addDays(minStart,-10);
+
+  const totalDays = Math.max(1,diffDays(addDays(maxFinish,10),state.origin));
+  const avail = Math.max(300,scrollWrap.clientWidth - LABEL_W - 80);
+
+  state.scale = clamp(avail / totalDays,0.04,260);
+
+  render();
+}
+
+function bindEvents(){
+  objectNameBox.addEventListener('dblclick',() => {
+    if(editGuard('Переименование объекта доступно только в режиме редактирования.')){
+      renameObject();
+    }
+  });
+
+  document.getElementById('btnViewMode').addEventListener('click',setViewMode);
+  document.getElementById('btnEditMode').addEventListener('click',requestEditMode);
+
+  document.getElementById('btnNew').addEventListener('click',createNewProject);
+  document.getElementById('btnSave').addEventListener('click',saveJson);
+  document.getElementById('btnLoad').addEventListener('click',() => document.getElementById('fileInput').click());
+  document.getElementById('btnCsv').addEventListener('click',exportCsv);
+
+  document.getElementById('fileInput').addEventListener('change',e => {
+    const file = e.target.files?.[0];
+    if(file) loadJsonFile(file);
+    e.target.value = '';
+  });
+
+  document.getElementById('btnAddChain').addEventListener('click',() => {
+    if(!editGuard('Добавление цепочки доступно только в режиме редактирования.')) return;
+    openChainModal();
+  });
+
+  document.getElementById('btnAddAosr').addEventListener('click',() => {
+    if(!editGuard('Добавление АОСР доступно только в режиме редактирования.')) return;
+
+    if(!state.chains.length){
+      toast('Сначала создайте цепочку.');
+      openChainModal();
+      return;
+    }
+
+    openAosrModal();
+  });
+
+  document.getElementById('btnLinkMode').addEventListener('click',() => {
+    if(!editGuard('Связывание АОСР доступно только в режиме редактирования.')) return;
+
+    state.linkMode = !state.linkMode;
+    state.linkSourceId = null;
+    state.selectedLinkId = null;
+    document.getElementById('btnLinkMode').classList.toggle('active',state.linkMode);
+    render();
+  });
+
+  document.getElementById('btnZoomOut').addEventListener('click',() => zoom(0.65));
+  document.getElementById('btnZoomIn').addEventListener('click',() => zoom(1.55));
+  document.getElementById('btnFit').addEventListener('click',fitAll);
+
+  statusFilterTop.addEventListener('change',() => setStatusFilter(statusFilterTop.value,state.filterOnly));
+  smrFilterTop.addEventListener('change',() => setSmrFilter(smrFilterTop.value,state.filterOnly));
+  statusOnlyTop.addEventListener('change',() => setCombinedFilters(state.filterStatus,state.filterSmr,statusOnlyTop.checked));
+  btnStatusResetTop.addEventListener('click',resetStatusFilters);
+
+  statusFilterLeft.addEventListener('change',() => setStatusFilter(statusFilterLeft.value,state.filterOnly));
+  smrFilterLeft.addEventListener('change',() => setSmrFilter(smrFilterLeft.value,state.filterOnly));
+  statusOnlyLeft.addEventListener('change',() => setCombinedFilters(state.filterStatus,state.filterSmr,statusOnlyLeft.checked));
+  btnStatusResetLeft.addEventListener('click',resetStatusFilters);
+
+  originDate.addEventListener('change',() => {
+    state.origin = originDate.value || state.origin;
+    markDirty();
+    render();
+  });
+
+  textSearchInput.addEventListener('input',e => {
+    state.filterText = e.target.value.trim();
+    state.searchCursor = -1;
+    clearSearchBtn.style.display = state.filterText ? 'block' : 'none';
+    render();
+  });
+
+  textSearchInput.addEventListener('keydown',e => {
+    if(e.key !== 'Enter') return;
+
+    e.preventDefault();
+    jumpToTextSearchResult(e.shiftKey ? -1 : 1);
+  });
+
+  btnSearchPrev.addEventListener('click',() => jumpToTextSearchResult(-1));
+  btnSearchNext.addEventListener('click',() => jumpToTextSearchResult(1));
+
+  clearSearchBtn.addEventListener('click',() => {
+    state.filterText = '';
+    state.searchCursor = -1;
+    textSearchInput.value = '';
+    clearSearchBtn.style.display = 'none';
+    render();
+  });
+
+  document.getElementById('btnCancelModal').addEventListener('click',closeModals);
+  document.getElementById('btnSaveAosr').addEventListener('click',saveAosrModal);
+
+  document.getElementById('btnDeleteAosr').addEventListener('click',() => {
+    const id = document.getElementById('editId').value;
+
+    if(id){
+      deleteItem(id);
+      closeModals();
+    }
+  });
+
+  document.getElementById('btnCancelChain').addEventListener('click',closeModals);
+  document.getElementById('btnSaveChain').addEventListener('click',saveChainModal);
+  document.getElementById('btnDeleteChain').addEventListener('click',deleteChainModal);
+
+  document.getElementById('modalBackdrop').addEventListener('mousedown',e => {
+    if(e.target === document.getElementById('modalBackdrop')) closeModals();
+  });
+
+  document.getElementById('chainModalBackdrop').addEventListener('mousedown',e => {
+    if(e.target === document.getElementById('chainModalBackdrop')) closeModals();
+  });
+
+  document.getElementById('btnAddDocRow').addEventListener('click',() => {
+    const type = document.getElementById('newDocType').value;
+    const nameBox = document.getElementById('newDocName');
+    const name = nameBox.value.trim();
+
+    if(!name){
+      toast('Введите название документа.');
+      nameBox.focus();
+      return;
+    }
+
+    addDocToModal(type,name,false);
+    nameBox.value = '';
+    nameBox.focus();
+  });
+
+  document.getElementById('btnAddTypicalDocs').addEventListener('click',addTypicalDocsToModal);
+
+  document.getElementById('newDocName').addEventListener('keydown',e => {
+    if(e.key === 'Enter'){
+      e.preventDefault();
+      document.getElementById('btnAddDocRow').click();
+    }
+  });
+
+  document.getElementById('docsList').addEventListener('change',e => {
+    const row = e.target.closest('.doc-row');
+
+    if(!row) return;
+
+    if(e.target.classList.contains('doc-check')){
+      const label = row.querySelector('.doc-present');
+      label.textContent = e.target.checked ? 'есть' : 'нет';
+      label.classList.toggle('ok',e.target.checked);
+    }
+
+    refreshModalDocsFromDom();
+  });
+
+  document.getElementById('docsList').addEventListener('input',e => {
+    if(e.target.classList.contains('doc-name')) refreshModalDocsFromDom();
+  });
+
+  document.getElementById('docsList').addEventListener('click',e => {
+    if(e.target.classList.contains('doc-del')){
+      e.preventDefault();
+      const row = e.target.closest('.doc-row');
+      row?.remove();
+      refreshModalDocsFromDom();
+    }
+  });
+
+  document.addEventListener('keydown',e => {
+    const tag = String(e.target?.tagName || '').toUpperCase();
+
+    if(tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+
+    if(e.key === 'Delete'){
+      if(isViewMode()){
+        toast('Удаление доступно только в режиме редактирования.');
+        return;
+      }
+
+      if(state.selectedItemId){
+        deleteItem(state.selectedItemId);
+      }else if(state.selectedLinkId){
+        state.links = state.links.filter(l => l.id !== state.selectedLinkId);
+        state.selectedLinkId = null;
+        markDirty();
+        render();
+      }
+    }
+
+    if(e.key === 'Escape'){
+      state.linkMode = false;
+      state.linkSourceId = null;
+      document.getElementById('btnLinkMode').classList.remove('active');
+      closeModals();
+      render();
+    }
+  });
+
+  window.addEventListener('beforeunload',e => {
+    if(state.dirty){
+      e.preventDefault();
+      e.returnValue = '';
+    }
+  });
+
+  window.addEventListener('resize',() => render());
+}
+
+initDemo();
+state.mode = 'view';
+initBottomPanelResize();
+bindEvents();
+applyAppMode();
+render();
+</script>
+</body>
+</html>
