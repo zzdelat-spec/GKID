@@ -1403,6 +1403,7 @@
         • Потяни за края — изменение дат.<br>
         • <b>Двойной клик — полная карточка АОСР.</b><br>
         • <span class="kbd">Ctrl + Колесо</span> — масштаб карты.<br>
+        • <span class="kbd">Ctrl+C</span> — копировать выбранный АОСР, <span class="kbd">Ctrl+V</span> — вставить его копию.<br>
         • <span class="kbd">Delete</span> — удалить выбранный АОСР/связь.<br>
         • Двойной клик по названию объекта сверху — переименовать объект.
       </div>
@@ -1603,6 +1604,7 @@ const state = {
   linkSourceId:null,
   selectedItemId:null,
   selectedLinkId:null,
+  aosrClipboard:null,
   drag:null,
   dirty:false,
   filterStatus:'',
@@ -2058,6 +2060,7 @@ function createEmptyProject(objectName,password='admin'){
   state.linkSourceId = null;
   state.selectedItemId = null;
   state.selectedLinkId = null;
+  state.aosrClipboard = null;
   state.drag = null;
   state.bottomDocFilter = '__all__';
   state.filterStatus = '';
@@ -4073,6 +4076,98 @@ function deleteChainModal(){
   render();
 }
 
+
+function clonePlain(value){
+  return JSON.parse(JSON.stringify(value || {}));
+}
+
+function isModalOpen(){
+  const visible = el => !!el && window.getComputedStyle(el).display !== 'none';
+
+  return visible(document.getElementById('modalBackdrop')) ||
+    visible(document.getElementById('chainModalBackdrop'));
+}
+
+function makeCopiedAosrNumber(baseNumber){
+  const base = String(baseNumber || `АОСР №${state.items.length + 1}`).trim() || `АОСР №${state.items.length + 1}`;
+  const existing = new Set(state.items.map(it => String(it.number || '').trim().toLowerCase()).filter(Boolean));
+
+  let candidate = `${base} (копия)`;
+  let n = 2;
+
+  while(existing.has(candidate.toLowerCase())){
+    candidate = `${base} (копия ${n})`;
+    n++;
+  }
+
+  return candidate;
+}
+
+function copySelectedAosr(){
+  const it = itemById(state.selectedItemId);
+
+  if(!it){
+    toast('Сначала выберите АОСР для копирования.');
+    return;
+  }
+
+  const copy = clonePlain(it);
+  delete copy.id;
+  copy.docs = ensureItemDocs(copy,false).map(d => ({...normalizeDoc(d), id:uid('doc')}));
+
+  state.aosrClipboard = {
+    item:copy,
+    pasteCount:0
+  };
+
+  toast(`АОСР скопирован: ${it.number || it.title || 'без номера'}. Нажмите Ctrl+V для вставки.`);
+}
+
+function pasteCopiedAosr(){
+  if(!editGuard('Вставка АОСР доступна только в режиме редактирования.')) return;
+
+  if(!state.aosrClipboard?.item){
+    toast('Буфер АОСР пуст. Сначала выберите АОСР и нажмите Ctrl+C.');
+    return;
+  }
+
+  const base = state.aosrClipboard.item;
+  const item = clonePlain(base);
+  const pasteShiftDays = Math.max(1,(state.aosrClipboard.pasteCount || 0) + 1);
+  const baseStart = item.start || state.origin;
+  const baseFinish = item.finish || baseStart;
+
+  item.id = uid('aosr');
+  item.chainId = chainById(item.chainId)?.id || sortedChains()[0]?.id || state.chains[0]?.id || '';
+  item.number = makeCopiedAosrNumber(base.number);
+  item.start = addDays(baseStart,pasteShiftDays);
+  item.finish = addDays(baseFinish,pasteShiftDays);
+  item.status = item.status || 'Не начато';
+  item.smrStatus = normalizeSmrStatus(item.smrStatus);
+  item.smrCost = normalizeSmrCost(item.smrCost);
+  item.docs = ensureItemDocs(item,false).map(d => ({...normalizeDoc(d), id:uid('doc')}));
+
+  if(!item.chainId){
+    toast('Нельзя вставить АОСР: нет ни одной цепочки.');
+    return;
+  }
+
+  state.aosrClipboard.pasteCount = pasteShiftDays;
+  state.items.push(item);
+  state.selectedItemId = item.id;
+  state.selectedLinkId = null;
+  state.linkMode = false;
+  state.linkSourceId = null;
+
+  const linkBtn = document.getElementById('btnLinkMode');
+  if(linkBtn) linkBtn.classList.remove('active');
+
+  markDirty();
+  render();
+  requestAnimationFrame(() => centerItemInView(item.id));
+  toast(`Вставлена копия АОСР: ${item.number}.`);
+}
+
 function closeModals(){
   document.getElementById('modalBackdrop').style.display = 'none';
   document.getElementById('chainModalBackdrop').style.display = 'none';
@@ -4137,6 +4232,7 @@ function loadJsonFile(file){
       state.linkSourceId = null;
       state.selectedItemId = null;
       state.selectedLinkId = null;
+      state.aosrClipboard = null;
       state.dirty = false;
       state.bottomDocFilter = '__all__';
       state.filterStatus = '';
@@ -4432,6 +4528,23 @@ function bindEvents(){
     const tag = String(e.target?.tagName || '').toUpperCase();
 
     if(tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+
+    const ctrlOrCmd = e.ctrlKey || e.metaKey;
+    const key = String(e.key || '').toLowerCase();
+
+    if(ctrlOrCmd && !e.altKey && !e.shiftKey && (key === 'c' || key === 'v')){
+      if(isModalOpen()) return;
+
+      e.preventDefault();
+
+      if(key === 'c'){
+        copySelectedAosr();
+      }else{
+        pasteCopiedAosr();
+      }
+
+      return;
+    }
 
     if(e.key === 'Delete'){
       if(isViewMode()){
